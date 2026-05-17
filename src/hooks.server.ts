@@ -8,7 +8,7 @@ export const handle: Handle = async({ event, resolve }) => {
     // Set up Supabase client in locals for server-side usage using the createServerClient function from @supabase/ssr
     event.locals.supabase = createServerClient<Database>(
         PUBLIC_SUPABASE_URL, 
-        PUBLIC_SUPABASE_PUBLISHABLE_KEY), {
+        PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
             // Provide a way to get and set cookies in the Supabase client for server-side usage
             cookies: {
                 // Get all cookies from the request
@@ -23,7 +23,7 @@ export const handle: Handle = async({ event, resolve }) => {
                     }
                 } 
             }
-    };
+    });
 
     // 
     event.locals.safeGetSession = async () => {
