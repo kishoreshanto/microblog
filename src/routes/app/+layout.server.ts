@@ -1,8 +1,9 @@
-import { redirect } from '@sveltejs/kit';
+import { error as kitError, redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const { user } = await locals.safeGetSession();
+	const isOnboarding = url.pathname.replace(/\/$/, '') === '/app/onboarding';
 
 	// if user is lot logged it, throw 'em to login page
 	if (!user) {
@@ -18,17 +19,17 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 	// if anything goes wrong
 	if (error) {
-		console.log(error);
-		redirect(303, '/auth/login');
+		console.error(error);
+		kitError(500, 'Could not load profile.');
 	}
 
 	// if the user is new, take 'em to onboading
-	if (!profile && url.pathname !== '/app/onboarding') {
+	if (!profile && !isOnboarding) {
 		redirect(303, '/app/onboarding');
 	}
 
 	// existing users get directed to main app
-	if (profile && url.pathname === '/app/onboarding') {
+	if (profile && isOnboarding) {
 		redirect(303, '/app');
 	}
 
