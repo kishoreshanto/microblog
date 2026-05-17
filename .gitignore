@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+/build/
+/dist/
+/.svelte-kit/
+/package/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Vercel output
+.vercel/
+
+# Svelte / Vite temporary files
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.svelte-cache
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Test outputs
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Package manager caches
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnpm-store/
+
+# Editor / IDE
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Supabase local temp files
+supabase/.branches/
+supabase/.temp/
+
+# LLM / local assistant files
+.codex/
+.claude/
+
+# Internal local planning only
+PLAN/
+.misc/
