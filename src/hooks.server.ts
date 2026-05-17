@@ -5,6 +5,7 @@ import type { Handle } from "@sveltejs/kit";
 
 // Hook for handling requests and setting up Supabase client in locals
 export const handle: Handle = async({ event, resolve }) => {
+    console.log("Handling request for:", event.url.pathname);
     // Set up Supabase client in locals for server-side usage using the createServerClient function from @supabase/ssr
     event.locals.supabase = createServerClient<Database>(
         PUBLIC_SUPABASE_URL, 
@@ -27,6 +28,7 @@ export const handle: Handle = async({ event, resolve }) => {
 
     // 
     event.locals.safeGetSession = async () => {
+        console.log("Attempting to get user session from Supabase...");
         // Attempt to get the user session from Supabase
         const {data: {user}, error} = await event.locals.supabase.auth.getUser();
 
