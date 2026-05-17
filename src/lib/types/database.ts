@@ -21,11 +21,14 @@ export type Database = {
 					updated_at?: string;
 				};
 				Update: {
+					id?: string;
 					username?: string;
 					display_name?: string | null;
 					bio?: string | null;
+					created_at?: string;
 					updated_at?: string;
 				};
+				Relationships: [];
 			};
 			posts: {
 				Row: {
@@ -47,11 +50,23 @@ export type Database = {
 					updated_at?: string;
 				};
 				Update: {
+					id?: string;
+					author_id?: string;
 					content?: string;
 					word_count?: number;
 					visibility?: 'private' | 'public' | 'followers';
+					created_at?: string;
 					updated_at?: string;
 				};
+				Relationships: [
+					{
+						foreignKeyName: 'posts_author_id_fkey';
+						columns: ['author_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
 			};
 		};
 		Views: Record<string, never>;
