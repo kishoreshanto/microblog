@@ -39,7 +39,12 @@
 			</div>
 
 			<label class="flex gap-3 text-sm text-neutral-300">
-				<input name="age_confirmed" type="checkbox" class="mt-1 rounded border-neutral-700" required />
+				<input
+					name="age_confirmed"
+					type="checkbox"
+					class="mt-1 rounded border-neutral-700"
+					required
+				/>
 				<span>I confirm that I am 16 or older.</span>
 			</label>
 
