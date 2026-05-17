@@ -8,15 +8,15 @@
 
 <main class="min-h-screen bg-neutral-950 text-white">
 	<section class="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
-		<p class="mb-4 text-sm font-medium uppercase tracking-[0.3em] text-neutral-400">
+		<p class="mb-4 text-sm font-medium tracking-[0.3em] text-neutral-400 uppercase">
 			Private microblogging
 		</p>
 
 		<h1 class="text-5xl font-bold tracking-tight sm:text-6xl">MicroBlog</h1>
 
 		<p class="mt-6 max-w-xl text-lg leading-8 text-neutral-300">
-			Write short 100-word posts in a simple, private space. No public feed, no noise,
-			no unnecessary data collection.
+			Write short 100-word posts in a simple, private space. No public feed, no noise, no
+			unnecessary data collection.
 		</p>
 
 		<div class="mt-10 flex flex-wrap gap-3">
