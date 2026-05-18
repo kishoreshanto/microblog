@@ -73,7 +73,7 @@ export const actions: Actions = {
 		// Insert the new post into the database
 		const { error } = await locals.supabase.from('posts').insert({
 			author_id: user.id,
-			content: content,
+			content: trimmedContent,
 			word_count: wordCount,
 			visibility: 'private'
 		});
