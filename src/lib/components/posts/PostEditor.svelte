@@ -4,20 +4,30 @@
 
 	import { StarterKit } from '@tiptap/starter-kit';
 	import { CharacterCount, Placeholder } from '@tiptap/extensions';
+	import { countWords } from '$lib/utils/words';
+
+	type EditorMode = 'plain' | 'formatted';
 
 	type Props = {
 		name?: string;
 		content?: string;
 		maxWords?: number;
+		mode?: EditorMode;
 	};
 
-	let { name = 'content', content = $bindable(''), maxWords = 100 }: Props = $props();
+	let {
+		name = 'content',
+		content = $bindable(''),
+		maxWords = 100,
+		mode = 'formatted'
+	}: Props = $props();
 
 	let element = $state<HTMLDivElement | null>(null);
 	let editorState = $state<{ editor: Editor | null }>({ editor: null });
 	let editorVersion = $state(0);
-	let wordCount = $state(0);
+	let formattedWordCount = $state(0);
 
+	let wordCount = $derived(mode === 'plain' ? countWords(content) : formattedWordCount);
 	let remainingWords = $derived(maxWords - wordCount);
 	let isEmpty = $derived(wordCount === 0);
 	let isOverLimit = $derived(wordCount > maxWords);
@@ -27,9 +37,12 @@
 		editorVersion += 1;
 	}
 
-	function syncFromEditor(editor: Editor) {
-		content = editor.getText().trim();
-		wordCount = editor.storage.characterCount.words();
+	function syncFromEditor(editor: Editor, syncContent = mode === 'formatted') {
+		if (syncContent) {
+			content = editor.getText().trim();
+		}
+
+		formattedWordCount = editor.storage.characterCount.words();
 	}
 
 	function runCommand(command: (editor: Editor) => void) {
@@ -97,7 +110,7 @@
 			},
 			onTransaction: ({ editor }) => {
 				refreshToolbar(editor);
-				syncFromEditor(editor);
+				syncFromEditor(editor, mode === 'formatted');
 			}
 		});
 
@@ -117,7 +130,7 @@
 
 		if (content.trim() !== editor.getText().trim()) {
 			editor.commands.setContent(toEditorHtml(content.trim()));
-			syncFromEditor(editor);
+			syncFromEditor(editor, mode === 'formatted');
 		}
 	});
 </script>
@@ -125,7 +138,7 @@
 <div class="space-y-2">
 	<input type="hidden" {name} value={content} />
 
-	{#if editorState.editor}
+	{#if mode === 'formatted' && editorState.editor}
 		<div
 			class="flex flex-wrap items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1"
 		>
@@ -138,9 +151,7 @@
 				class="toolbar-button font-bold"
 				onclick={() => runCommand((editor) => editor.chain().focus().toggleBold().run())}
 			>
-				<span class="font-black">
-					B
-				</span>
+				<span class="font-black"> B </span>
 			</button>
 
 			<button
@@ -152,9 +163,7 @@
 				class="toolbar-button italic"
 				onclick={() => runCommand((editor) => editor.chain().focus().toggleItalic().run())}
 			>
-				<span class="italic">
-					I
-				</span>
+				<span class="italic"> I </span>
 			</button>
 
 			<button
@@ -166,9 +175,7 @@
 				class="toolbar-button line-through"
 				onclick={() => runCommand((editor) => editor.chain().focus().toggleStrike().run())}
 			>
-				<span class="line-through">
-					S
-				</span>
+				<span class="line-through"> S </span>
 			</button>
 
 			<button
@@ -180,9 +187,7 @@
 				class="toolbar-button font-mono"
 				onclick={() => runCommand((editor) => editor.chain().focus().toggleCode().run())}
 			>
-				<span class="font-mono">
-					&lt;/&gt;
-				</span>
+				<span class="font-mono"> &lt;/&gt; </span>
 			</button>
 
 			<span class="mx-1 h-6 w-px bg-slate-200" aria-hidden="true"></span>
@@ -294,7 +299,15 @@
 		</div>
 	{/if}
 
-	<div bind:this={element}></div>
+	{#if mode === 'plain'}
+		<textarea
+			bind:value={content}
+			placeholder={`Write up to ${maxWords} words...`}
+			class="min-h-36 w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-950 shadow-sm outline-none focus:border-slate-900"
+		></textarea>
+	{/if}
+
+	<div class:hidden={mode === 'plain'} bind:this={element}></div>
 
 	<div class="flex items-center justify-between gap-4">
 		<p class:text-red-600={isOverLimit} class="text-sm text-slate-500">

@@ -12,6 +12,7 @@
 	let content = $derived(form?.content ?? '');
 	let wordCount = $derived(countWords(content));
 	let isOverLimit = $derived(wordCount > 100);
+	let isFormatted = $state(false);
 </script>
 
 <svelte:head>
@@ -39,12 +40,38 @@
 		}}
 		class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
 	>
-		<div class="space-y-2">
-			<label for="content" class="block text-sm font-medium text-slate-900">
-				New private post
-			</label>
+		<div class="space-y-3">
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<label for="content" class="block text-sm font-medium text-slate-900">
+					New private post
+				</label>
 
-			<PostEditor name="content" bind:content maxWords={100} />
+				<!-- <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+					<span>Plain text</span>
+					<button
+						disabled
+						type="button"
+						role="switch"
+						aria-checked={isFormatted}
+						aria-label="Toggle formatted text"
+						class="relative inline-flex h-6 w-11 items-center rounded-full border border-slate-300 bg-slate-200 transition-colors aria-checked:bg-slate-950"
+						onclick={() => (isFormatted = !isFormatted)}
+					>
+						<span
+							class="inline-block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform"
+							class:translate-x-5={isFormatted}
+						></span>
+					</button>
+					<span>Formatted</span>
+				</label> -->
+			</div>
+
+			<PostEditor
+				name="content"
+				bind:content
+				maxWords={100}
+				mode={isFormatted ? 'formatted' : 'plain'}
+			/>
 		</div>
 
 		<div class="flex justify-end">
