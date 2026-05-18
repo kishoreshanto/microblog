@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>App · MicroBlog</title>
+	<title>MicroBlog</title>
 </svelte:head>
 
 <section>

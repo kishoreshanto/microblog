@@ -10,7 +10,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		redirect(303, '/auth/login');
 	}
 
-	//
+	// Get profile data from supabase
 	const { data: profile, error } = await locals.supabase
 		.from('profiles')
 		.select('id, username, display_name, bio, created_at, updated_at')
