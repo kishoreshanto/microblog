@@ -51,7 +51,7 @@ export const actions: Actions = {
 
 		// No session or no user? Throw away
 		if (!session || !user) {
-			throw redirect(303, 'app/login');
+			throw redirect(303, '/app/login');
 		}
 
 		const formData = await request.formData();
