@@ -53,7 +53,9 @@
 
 		<p class="mt-6 text-sm text-neutral-600">
 			Need an account?
-			<a href="/auth/register" class="font-medium text-neutral-950 hover:underline">Create account</a>
+			<a href="/auth/register" class="font-medium text-neutral-950 hover:underline"
+				>Create account</a
+			>
 		</p>
 	</section>
 </main>

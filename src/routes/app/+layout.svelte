@@ -13,7 +13,9 @@
 				{/if}
 
 				<form method="POST" action="/auth/logout">
-					<button type="submit" class="text-sm text-neutral-500 hover:text-neutral-950">Sign out</button>
+					<button type="submit" class="text-sm text-neutral-500 hover:text-neutral-950"
+						>Sign out</button
+					>
 				</form>
 			</div>
 		</div>
