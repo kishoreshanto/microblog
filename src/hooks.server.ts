@@ -29,23 +29,27 @@ export const handle: Handle = async ({ event, resolve }) => {
 	);
 
 	//
-	event.locals.safeGetSession = async () => {
+	event.locals.safeGetSession = () => {
 		console.log('Attempting to get user session from Supabase...');
-		// Attempt to get the user session from Supabase
-		const {
-			data: { user },
-			error
-		} = await event.locals.supabase.auth.getUser();
+		event.locals.safeSessionPromise ??= (async () => {
+			// Attempt to get the user session from Supabase
+			const {
+				data: { user },
+				error
+			} = await event.locals.supabase.auth.getUser();
 
-		if (error || !user) {
-			return { session: null, user: null };
-		}
+			if (error || !user) {
+				return { session: null, user: null };
+			}
 
-		const {
-			data: { session }
-		} = await event.locals.supabase.auth.getSession();
+			const {
+				data: { session }
+			} = await event.locals.supabase.auth.getSession();
 
-		return { session, user };
+			return { session, user };
+		})();
+
+		return event.locals.safeSessionPromise;
 	};
 
 	// Filter out specific headers from the response to avoid issues with serialization in SvelteKit
