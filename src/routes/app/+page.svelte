@@ -9,7 +9,9 @@
 		form: ActionData;
 	}>();
 
-	let content = $derived(form?.content ?? '');
+	// svelte-ignore state_referenced_locally
+	// Seed editable state from server form data once; subsequent updates come from editor binding.
+	let content = $state(form?.content ?? '');
 	let wordCount = $derived(countWords(content));
 	let isOverLimit = $derived(wordCount > 100);
 	let isFormatted = $state(false);
