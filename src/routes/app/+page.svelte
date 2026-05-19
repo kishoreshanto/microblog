@@ -15,6 +15,14 @@
 	let wordCount = $derived(countWords(content));
 	let isOverLimit = $derived(wordCount > 100);
 	let isFormatted = $state(false);
+	let deletingPostID = $state<string | null>(null);
+
+	function formatPostDate(value: string) {
+		return new Intl.DateTimeFormat(undefined, {
+			dateStyle: 'medium',
+			timeStyle: 'short'
+		}).format(new Date(value));
+	}
 </script>
 
 <svelte:head>
@@ -118,15 +126,41 @@
 			<div class="space-y-3">
 				{#each data.posts as post (post.id)}
 					<article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-						<p class="whitespace-pre-wrap text-slate-900">{post.content}</p>
+						<div class="flex items-start justify-between gap-4">
+							<div class="min-w-0 flex-1 space-y-4">
+								<p class="whitespace-pre-wrap text-slate-900">{post.content}</p>
 
-						<footer class="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-							<span>{post.word_count} words</span>
-							<span>Private</span>
-							<time datetime={post.created_at}>
-								{new Date(post.created_at).toLocaleString()}
-							</time>
-						</footer>
+								<footer class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+									<span>{post.word_count} words</span>
+									<span>Private</span>
+									<time datetime={post.created_at}>{formatPostDate(post.created_at)}</time>
+								</footer>
+							</div>
+
+							<form
+								method="POST"
+								action="?/delete"
+								use:enhance={() => {
+									deletingPostID = post.id;
+
+									return async ({ update }) => {
+										await update();
+										deletingPostID = null;
+									};
+								}}
+							>
+								<input type="hidden" name="postID" value={post.id} />
+
+								<button
+									type="submit"
+									disabled={deletingPostID === post.id}
+									class="rounded-xl border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+									aria-label="Delete post"
+								>
+									{deletingPostID === post.id ? 'Deleting...' : 'Delete'}
+								</button>
+							</form>
+						</div>
 					</article>
 				{/each}
 			</div>

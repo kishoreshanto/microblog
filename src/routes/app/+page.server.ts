@@ -1,9 +1,9 @@
 import { countWords, isWithinWordLimit } from '$lib/utils/words';
-import z from 'zod';
+import {z} from 'zod';
 import type { PageServerLoad } from './$types';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 
-const postSchema = z.object({
+const createPostSchema = z.object({
 	content: z
 		.string()
 		.trim()
@@ -11,6 +11,11 @@ const postSchema = z.object({
 		.refine((value) => isWithinWordLimit(value), {
 			message: 'Post must be 100 words or fewer'
 		})
+});
+
+const deletePostSchema = z.object({
+	postID: z.string().uuid('Invalid post.')
+
 });
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -51,14 +56,14 @@ export const actions: Actions = {
 
 		// No session or no user? Throw away
 		if (!session || !user) {
-			throw redirect(303, '/app/login');
+			throw redirect(303, '/auth/login');
 		}
 
 		const formData = await request.formData();
 		const content = String(formData.get('content') ?? '');
 
 		// Pasring the data using Zod
-		const parsedContent = postSchema.safeParse({ content });
+		const parsedContent = createPostSchema.safeParse({ content });
 
 		if (!parsedContent.success) {
 			return fail(400, {
@@ -88,5 +93,54 @@ export const actions: Actions = {
 		return {
 			success: true
 		};
+	},
+
+	delete: async ({locals, request}) => {
+		const {user} = await locals.safeGetSession();
+
+		if(!user) {
+			throw redirect (303, '/authlogin');
+		}
+
+		const formData = await request.formData();
+		const postID = String(formData.get('postID') ?? '');
+
+		const parsedID = deletePostSchema.safeParse({postID});
+
+		// in case of error
+		if(!parsedID.success) {
+			return fail(400, {
+				action: 'delete',
+				error: parsedID.error.issues[0]?.message ?? 'Invalid post.'
+			});
+		}
+
+		const {data: deletedPosts, error} = await locals.supabase
+			.from('posts')
+			.delete()
+			.eq('author_id', user.id)
+			.eq('id', parsedID.data.postID)
+			.select('id');
+
+		if(error) {
+			return fail(500, {
+				action: 'delete',
+				error: 'Invalid Post.'
+
+			})
+		}
+
+		if(!deletedPosts || deletedPosts.length === 0) {
+			return fail(404, {
+				action: 'delete',
+				error: 'Post Not Found'
+			});
+		}
+
+		return {
+			action: 'delete',
+			success: true
+		};
+
 	}
 };
