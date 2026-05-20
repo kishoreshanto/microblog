@@ -128,38 +128,52 @@
 					<article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 						<div class="flex items-start justify-between gap-4">
 							<div class="min-w-0 flex-1 space-y-4">
-								<p class="whitespace-pre-wrap text-slate-900">{post.content}</p>
+								<p class="leading-7 wrap-break-word whitespace-pre-wrap text-slate-900">
+									{post.content}
+								</p>
 
-								<footer class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-									<span>{post.word_count} words</span>
-									<span>Private</span>
-									<time datetime={post.created_at}>{formatPostDate(post.created_at)}</time>
+								<footer
+									class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500"
+								>
+									<div>
+										<span>{post.word_count} {post.word_count === 1 ? 'word' : 'words'}</span>
+										<span aria-hidden="true">•</span>
+										<span>Private</span>
+										<span aria-hidden="true">•</span>
+										<time datetime={post.created_at}>
+											{formatPostDate(post.created_at)}
+										</time>
+									</div>
+									<form
+										method="POST"
+										action="?/delete"
+										onsubmit={(event) => {
+											if (!confirm('Delete this post? This cannot be undone.')) {
+												event.preventDefault();
+											}
+										}}
+										use:enhance={() => {
+											deletingPostID = post.id;
+
+											return async ({ update }) => {
+												await update();
+												deletingPostID = null;
+											};
+										}}
+									>
+										<input type="hidden" name="postID" value={post.id} />
+
+										<button
+											type="submit"
+											disabled={deletingPostID === post.id}
+											class="rounded-xl border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+											aria-label="Delete post"
+										>
+											{deletingPostID === post.id ? 'Deleting...' : 'Delete'}
+										</button>
+									</form>
 								</footer>
 							</div>
-
-							<form
-								method="POST"
-								action="?/delete"
-								use:enhance={() => {
-									deletingPostID = post.id;
-
-									return async ({ update }) => {
-										await update();
-										deletingPostID = null;
-									};
-								}}
-							>
-								<input type="hidden" name="postID" value={post.id} />
-
-								<button
-									type="submit"
-									disabled={deletingPostID === post.id}
-									class="rounded-xl border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-									aria-label="Delete post"
-								>
-									{deletingPostID === post.id ? 'Deleting...' : 'Delete'}
-								</button>
-							</form>
 						</div>
 					</article>
 				{/each}
