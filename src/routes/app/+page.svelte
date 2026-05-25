@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import CommentSection from '$lib/components/posts/CommentSection.svelte';
 	import PostEditor from '$lib/components/posts/PostEditor.svelte';
+	import VoteButtons from '$lib/components/posts/VoteButtons.svelte';
 	import { countWords } from '$lib/utils/words';
 	import type { ActionData, PageData } from './$types';
 
@@ -380,6 +382,23 @@
 										</div>
 									{/if}
 								</footer>
+
+								{#if post.visibility !== 'private'}
+									<div class="space-y-3 border-t border-slate-100 pt-4">
+										<VoteButtons
+											postId={post.id}
+											initialLikes={post.likes}
+											initialDislikes={post.dislikes}
+											initialUserVote={post.userVote}
+										/>
+
+										<CommentSection
+											postId={post.id}
+											initialCount={post.commentCount}
+											currentUserId={data.currentUserId}
+										/>
+									</div>
+								{/if}
 							</div>
 						{/if}
 					</article>
