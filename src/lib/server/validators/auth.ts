@@ -1,6 +1,7 @@
 // Auth validation using ZOD
 
 import z from 'zod';
+import { profileSchema } from './social';
 
 // Validation schema for user registration
 export const registerSchema = z.object({
@@ -18,13 +19,4 @@ export const loginSchema = z.object({
 	password: z.string().min(1, 'Password is required.')
 });
 
-// Validation schema for updating user profile
-export const profileSchema = z.object({
-	username: z
-		.string()
-		.trim()
-		.min(3, 'Username must be at least 3 characters.')
-		.max(30, 'Username must be at most 30 characters.')
-		.regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores.'),
-	display_name: z.string().trim().max(60, 'Display name must be at most 60 characters.').optional()
-});
+export { profileSchema };

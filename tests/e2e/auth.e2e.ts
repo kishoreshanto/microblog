@@ -16,7 +16,7 @@ test.describe('Authentication and Onboarding Flow', () => {
 		// 2. Form submission check - missing age confirmation
 		await page.locator('input[name="email"]').fill(email);
 		await page.locator('input[name="password"]').fill(password);
-		
+
 		// Attempt submit without checking the age confirmation box
 		// Note: HTML5 validation might block this, but we can verify it doesn't register
 		const ageCheckbox = page.locator('input[name="age_confirmed"]');
