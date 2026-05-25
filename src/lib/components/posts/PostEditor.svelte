@@ -55,7 +55,7 @@
 	}
 
 	function canRun(command: (editor: Editor) => boolean) {
-		editorVersion;
+		if (editorVersion < 0) return false;
 
 		const editor = editorState.editor;
 
@@ -63,7 +63,7 @@
 	}
 
 	function isActive(name: string, attrs?: Record<string, unknown>) {
-		editorVersion;
+		if (editorVersion < 0) return false;
 
 		return editorState.editor?.isActive(name, attrs) ?? false;
 	}
