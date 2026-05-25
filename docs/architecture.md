@@ -19,15 +19,17 @@ The first version supports:
 - Account login
 - Private user profile
 - Private 100-word posts
-- Personal feed
+- Public, private, and followers-only 100-word posts
+- Combined signed-in feed
+- Public profile pages
+- Profile editing
+- Approved follow requests
 - Delete own posts
 
 ## Deferred Features
 
 - Image attachments
 - Location tagging
-- Public posts
-- Followers
 - Reactions
 - Comments
 - Chat
