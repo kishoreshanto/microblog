@@ -87,7 +87,6 @@
 
 			<p class="text-sm font-medium tracking-wide text-slate-500 uppercase">Profile</p>
 
-
 			<div class="flex flex-wrap items-start justify-between gap-4">
 				<div class="flex items-center gap-5">
 					<img
@@ -97,11 +96,10 @@
 					/>
 					<div class="flex flex-col">
 						<h1 class=" text-3xl font-bold tracking-tight">
-						{data.profile.display_name || data.profile.username}
-					</h1>
-					<p class="mt-1 text-slate-500">@{data.profile.username}</p>
+							{data.profile.display_name || data.profile.username}
+						</h1>
+						<p class="mt-1 text-slate-500">@{data.profile.username}</p>
 					</div>
-					
 				</div>
 
 				{#if data.isOwner}
@@ -271,7 +269,12 @@
 										</label>
 									</div>
 
-									<PostEditor name="content" bind:content={editContent} maxWords={100} mode="plain" />
+									<PostEditor
+										name="content"
+										bind:content={editContent}
+										maxWords={100}
+										mode="plain"
+									/>
 
 									<div class="flex flex-wrap items-center justify-between gap-3">
 										{#if form?.action === 'updatePost' && form.postID === post.id && form.message}

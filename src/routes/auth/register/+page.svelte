@@ -8,20 +8,28 @@
 	<title>Create account · MicroBlog</title>
 </svelte:head>
 
-<main class="min-h-screen bg-white dark:bg-gray-950 px-6 py-16 text-neutral-950">
+<main class="min-h-screen bg-white px-6 py-16 text-neutral-950 dark:bg-gray-950">
 	<section class="mx-auto max-w-md">
 		<a href={resolve('/')} class="text-sm text-neutral-500 hover:text-neutral-950">
 			<span>
-			<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back_ios" />
-			</span> 
-			Back to Home</a>
+				<link
+					rel="stylesheet"
+					href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back_ios"
+				/>
+			</span>
+			Back to Home</a
+		>
 
 		<h1 class="mt-8 text-3xl font-bold dark:text-white">Create account</h1>
-		<p class="mt-3 text-neutral-600 dark:text-neutral-400">Start with an account and write short posts</p>
+		<p class="mt-3 text-neutral-600 dark:text-neutral-400">
+			Start with an account and write short posts
+		</p>
 
 		<form method="POST" class="mt-8 space-y-5">
 			<div>
-				<label for="email" class="block text-sm font-medium text-neutral-800 dark:text-white">Email</label>
+				<label for="email" class="block text-sm font-medium text-neutral-800 dark:text-white"
+					>Email</label
+				>
 				<input
 					id="email"
 					name="email"

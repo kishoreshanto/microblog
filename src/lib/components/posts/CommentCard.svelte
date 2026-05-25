@@ -63,7 +63,11 @@
 <article class="rounded-3xl border border-slate-200 bg-white p-3">
 	<header class="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-500">
 		<div class="flex items-center gap-2">
-			<img alt="avatar_{authorName()}" src="https://api.dicebear.com/9.x/initials/svg?seed={authorName()}"class="w-10 rounded-full" />
+			<img
+				alt="avatar_{authorName()}"
+				src="https://api.dicebear.com/9.x/initials/svg?seed={authorName()}"
+				class="w-10 rounded-full"
+			/>
 			<div class="flex flex-col">
 				<span class="font-medium text-slate-900">{authorName()}</span>
 				{#if comment.author?.username}
