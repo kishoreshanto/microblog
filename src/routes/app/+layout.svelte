@@ -11,7 +11,13 @@
 
 			<div class="flex items-center gap-4">
 				{#if data.profile}
-					<span class="text-sm text-neutral-500">@{data.profile.username}</span>
+					<a
+						href={resolve(`/u/${data.profile.username}`)}
+						class="text-sm text-neutral-500 hover:text-neutral-950">@{data.profile.username}</a
+					>
+					<a href={resolve('/app/profile')} class="text-sm text-neutral-500 hover:text-neutral-950">
+						Profile
+					</a>
 				{/if}
 
 				<form method="POST" action="/auth/logout">
