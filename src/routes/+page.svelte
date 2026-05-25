@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+</script>
+
 <svelte:head>
 	<title>MicroBlog</title>
 	<meta
@@ -21,14 +25,14 @@
 
 		<div class="mt-10 flex flex-wrap gap-3">
 			<a
-				href="/auth/register"
+				href={resolve('/auth/register')}
 				class="rounded-full border border-neutral-300 bg-white px-5 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100"
 			>
 				Create account
 			</a>
 
 			<a
-				href="/auth/login"
+				href={resolve('/auth/login')}
 				class="rounded-full border border-neutral-300 px-5 py-3 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100"
 			>
 				Sign in

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	let { form } = $props();
 </script>
 
@@ -8,7 +10,7 @@
 
 <main class="min-h-screen bg-white px-6 py-16 text-neutral-950">
 	<section class="mx-auto max-w-md">
-		<a href="/" class="text-sm text-neutral-500 hover:text-neutral-950">← MicroBlog</a>
+		<a href={resolve('/')} class="text-sm text-neutral-500 hover:text-neutral-950">← MicroBlog</a>
 
 		<h1 class="mt-8 text-3xl font-bold">Create account</h1>
 		<p class="mt-3 text-neutral-600">Start with a private account and write short posts.</p>
@@ -64,7 +66,9 @@
 
 		<p class="mt-6 text-sm text-neutral-600">
 			Already have an account?
-			<a href="/auth/login" class="font-medium text-neutral-950 hover:underline">Sign in</a>
+			<a href={resolve('/auth/login')} class="font-medium text-neutral-950 hover:underline"
+				>Sign in</a
+			>
 		</p>
 	</section>
 </main>
