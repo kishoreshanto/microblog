@@ -1,8 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test.describe('Posts Flow', () => {
 	// Helper function to register and onboarding a new user
-	async function registerAndOnboard(page) {
+	async function registerAndOnboard(page: Page) {
 		const timestamp = Date.now() + Math.floor(Math.random() * 1000);
 		const email = `post-test-${timestamp}@example.com`;
 		const password = 'Password123!';
@@ -47,9 +47,9 @@ test.describe('Posts Flow', () => {
 
 		const textarea = page.locator('textarea');
 		const postButton = page.getByRole('button', { name: 'Post privately' });
-		
+
 		const postContent = 'My first private microblog post! Simple and secure.';
-		
+
 		// 1. Create the post
 		await textarea.fill(postContent);
 		await postButton.click();
@@ -58,7 +58,7 @@ test.describe('Posts Flow', () => {
 		const postCard = page.locator('article').first();
 		await expect(postCard).toBeVisible();
 		await expect(postCard.locator('p')).toHaveText(postContent);
-		await expect(postCard.locator('footer')).toContainText('9 words');
+		await expect(postCard.locator('footer')).toContainText('8 words');
 		await expect(postCard.locator('footer')).toContainText('Private');
 
 		// 3. Delete the post (accept the confirmation dialog)
