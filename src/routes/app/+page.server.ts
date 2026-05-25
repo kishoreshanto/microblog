@@ -1,5 +1,6 @@
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 import { z } from 'zod';
+import { voteValueToType } from '$lib/server/validators/interactions';
 import { postVisibilitySchema } from '$lib/server/validators/social';
 import type { Database } from '$lib/types/database';
 import { countWords, isWithinWordLimit } from '$lib/utils/words';
@@ -33,6 +34,8 @@ type FeedPostRow = PostRow & {
 	profiles: ProfileRow | ProfileRow[] | null;
 };
 
+type NormalizedFeedPost = ReturnType<typeof normalizeFeedPost>;
+
 function normalizeFeedPost(post: FeedPostRow) {
 	const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
 
@@ -44,6 +47,10 @@ function normalizeFeedPost(post: FeedPostRow) {
 		visibility: post.visibility,
 		created_at: post.created_at,
 		updated_at: post.updated_at,
+		likes: 0,
+		dislikes: 0,
+		userVote: null as 'like' | 'dislike' | null,
+		commentCount: 0,
 		author: profile
 			? {
 					id: profile.id,
@@ -55,7 +62,7 @@ function normalizeFeedPost(post: FeedPostRow) {
 }
 
 function mergeFeedPosts(groups: FeedPostRow[][]) {
-	const posts = new Map<string, ReturnType<typeof normalizeFeedPost>>();
+	const posts = new Map<string, NormalizedFeedPost>();
 
 	for (const group of groups) {
 		for (const post of group) {
@@ -66,6 +73,62 @@ function mergeFeedPosts(groups: FeedPostRow[][]) {
 	return Array.from(posts.values()).sort(
 		(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 	);
+}
+
+async function attachInteractionData(
+	supabase: App.Locals['supabase'],
+	posts: NormalizedFeedPost[],
+	userID: string
+) {
+	const interactivePostIds = posts
+		.filter((post) => post.visibility !== 'private')
+		.map((post) => post.id);
+
+	if (interactivePostIds.length === 0) {
+		return posts;
+	}
+
+	const { data: votes, error: votesError } = await supabase
+		.from('post_votes')
+		.select('post_id, user_id, vote_type')
+		.in('post_id', interactivePostIds);
+
+	const { data: comments, error: commentsError } = await supabase
+		.from('comments')
+		.select('id, post_id')
+		.in('post_id', interactivePostIds);
+
+	if (votesError || commentsError) {
+		return posts;
+	}
+
+	const stats = new Map<
+		string,
+		{ likes: number; dislikes: number; userVote: 'like' | 'dislike' | null; commentCount: number }
+	>();
+
+	for (const postID of interactivePostIds) {
+		stats.set(postID, { likes: 0, dislikes: 0, userVote: null, commentCount: 0 });
+	}
+
+	for (const vote of votes ?? []) {
+		const postStats = stats.get(vote.post_id);
+		if (!postStats) continue;
+
+		if (vote.vote_type === 1) postStats.likes += 1;
+		if (vote.vote_type === -1) postStats.dislikes += 1;
+		if (vote.user_id === userID) postStats.userVote = voteValueToType(vote.vote_type);
+	}
+
+	for (const comment of comments ?? []) {
+		const postStats = stats.get(comment.post_id);
+		if (postStats) postStats.commentCount += 1;
+	}
+
+	return posts.map((post) => ({
+		...post,
+		...(stats.get(post.id) ?? {})
+	}));
 }
 
 const feedSelect =
@@ -125,12 +188,14 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 		};
 	}
 
+	const posts = mergeFeedPosts([
+		(ownPosts ?? []) as FeedPostRow[],
+		(publicPosts ?? []) as FeedPostRow[],
+		(followersQuery.data ?? []) as FeedPostRow[]
+	]);
+
 	return {
-		posts: mergeFeedPosts([
-			(ownPosts ?? []) as FeedPostRow[],
-			(publicPosts ?? []) as FeedPostRow[],
-			(followersQuery.data ?? []) as FeedPostRow[]
-		]),
+		posts: await attachInteractionData(locals.supabase, posts, user.id),
 		currentUserId: user.id,
 		loaderror: null
 	};
