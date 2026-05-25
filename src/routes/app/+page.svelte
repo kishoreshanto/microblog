@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import PostEditor from '$lib/components/posts/PostEditor.svelte';
 	import { countWords } from '$lib/utils/words';
 	import type { ActionData, PageData } from './$types';
@@ -10,10 +11,20 @@
 	}>();
 
 	type Post = PageData['posts'][number];
+	type Visibility = Post['visibility'];
+
+	const visibilityOptions: Array<{ value: Visibility; label: string; help: string }> = [
+		{ value: 'private', label: 'Private', help: 'Only you can see it.' },
+		{ value: 'public', label: 'Public', help: 'Anyone can read it on your profile.' },
+		{ value: 'followers', label: 'Followers', help: 'Approved followers can read it.' }
+	];
 
 	// svelte-ignore state_referenced_locally
-	// Seed editable state from server form data once; subsequent updates come from editor binding.
 	let content = $state(form?.action === 'create' ? (form.content ?? '') : '');
+	// svelte-ignore state_referenced_locally
+	let visibility = $state<Visibility>(
+		form?.action === 'create' && isVisibility(form.visibility) ? form.visibility : 'private'
+	);
 	let wordCount = $derived(countWords(content));
 	let isOverLimit = $derived(wordCount > 100);
 	let isFormatted = $state(false);
@@ -26,11 +37,30 @@
 	);
 	// svelte-ignore state_referenced_locally
 	let editContent = $state(form?.action === 'update' ? (form.content ?? '') : '');
+	// svelte-ignore state_referenced_locally
+	let editVisibility = $state<Visibility>(
+		form?.action === 'update' && isVisibility(form.visibility) ? form.visibility : 'private'
+	);
 	let editWordCount = $derived(countWords(editContent));
 	let isEditOverLimit = $derived(editWordCount > 100);
 	let postCountLabel = $derived(
-		data.posts.length === 1 ? '1 private post' : `${data.posts.length} private posts`
+		data.posts.length === 1 ? '1 post in feed' : `${data.posts.length} posts in feed`
 	);
+
+	function isVisibility(value: unknown): value is Visibility {
+		return value === 'private' || value === 'public' || value === 'followers';
+	}
+
+	function visibilityLabel(value: Visibility) {
+		return visibilityOptions.find((option) => option.value === value)?.label ?? 'Private';
+	}
+
+	function visibilityClass(value: Visibility) {
+		if (value === 'public') return 'bg-emerald-50 text-emerald-700';
+		if (value === 'followers') return 'bg-blue-50 text-blue-700';
+
+		return 'bg-slate-100 text-slate-700';
+	}
 
 	function formatPostDate(value: string) {
 		const date = new Date(value);
@@ -61,14 +91,20 @@
 		);
 	}
 
+	function authorName(post: Post) {
+		return post.author?.display_name || post.author?.username || 'Unknown author';
+	}
+
 	function startEditing(post: Post) {
 		editingPostID = post.id;
 		editContent = post.content;
+		editVisibility = post.visibility;
 	}
 
 	function stopEditing() {
 		editingPostID = null;
 		editContent = '';
+		editVisibility = 'private';
 		updatingPostID = null;
 	}
 </script>
@@ -79,9 +115,11 @@
 
 <section class="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
 	<header class="space-y-2">
-		<p class="text-sm font-medium tracking-wide text-slate-500 uppercase">Private feed</p>
+		<p class="text-sm font-medium tracking-wide text-slate-500 uppercase">Home feed</p>
 		<h1 class="text-3xl font-bold tracking-tight text-slate-950">Your MicroBlog</h1>
-		<p class="text-slate-600">Write short private posts. Each post is limited to 100 words.</p>
+		<p class="text-slate-600">
+			Write short posts and read public or followers-only posts you are allowed to see.
+		</p>
 	</header>
 
 	<form
@@ -96,6 +134,7 @@
 
 				if (result.type === 'success') {
 					content = '';
+					visibility = 'private';
 				}
 			};
 		}}
@@ -103,8 +142,19 @@
 	>
 		<div class="space-y-3">
 			<div class="flex flex-wrap items-center justify-between gap-3">
-				<label for="content" class="block text-sm font-medium text-slate-900">
-					New private post
+				<label for="content" class="block text-sm font-medium text-slate-900"> New post </label>
+
+				<label class="flex items-center gap-2 text-sm text-slate-600">
+					<span>Visibility</span>
+					<select
+						name="visibility"
+						bind:value={visibility}
+						class="rounded-lg border-slate-300 py-1.5 text-sm"
+					>
+						{#each visibilityOptions as option (option.value)}
+							<option value={option.value}>{option.label}</option>
+						{/each}
+					</select>
 				</label>
 			</div>
 
@@ -114,6 +164,9 @@
 				maxWords={100}
 				mode={isFormatted ? 'formatted' : 'plain'}
 			/>
+			<p class="text-sm text-slate-500">
+				{visibilityOptions.find((option) => option.value === visibility)?.help}
+			</p>
 		</div>
 
 		<div class="flex flex-wrap items-center justify-between gap-3">
@@ -123,9 +176,7 @@
 						{form.error}
 					</p>
 				{:else if form?.action === 'create' && form.success}
-					<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-						Post saved privately.
-					</p>
+					<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Post saved.</p>
 				{/if}
 			</div>
 
@@ -134,7 +185,7 @@
 				disabled={isCreating || isOverLimit || wordCount === 0}
 				class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
 			>
-				{isCreating ? 'Saving...' : 'Post privately'}
+				{isCreating ? 'Saving...' : 'Post'}
 			</button>
 		</div>
 	</form>
@@ -142,7 +193,7 @@
 	<section class="space-y-4">
 		<div class="flex flex-wrap items-end justify-between gap-3">
 			<div>
-				<h2 class="text-xl font-semibold text-slate-950">Your posts</h2>
+				<h2 class="text-xl font-semibold text-slate-950">Feed</h2>
 				<p class="mt-1 text-sm text-slate-500">{postCountLabel}</p>
 			</div>
 
@@ -165,14 +216,15 @@
 			<div
 				class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center"
 			>
-				<p class="text-lg font-semibold text-slate-950">No private posts yet</p>
+				<p class="text-lg font-semibold text-slate-950">No posts yet.</p>
 				<p class="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
-					Write your first MicroBlog above. It will stay visible only to you.
+					Write your first MicroBlog, or follow someone to see approved followers-only posts here.
 				</p>
 			</div>
 		{:else}
 			<div class="space-y-3">
 				{#each data.posts as post (post.id)}
+					{@const isOwned = post.author_id === data.currentUserId}
 					<article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 						{#if editingPostID === post.id}
 							<form
@@ -194,6 +246,22 @@
 							>
 								<input type="hidden" name="postID" value={post.id} />
 
+								<div class="flex flex-wrap items-center justify-between gap-3">
+									<div class="text-sm font-medium text-slate-900">Edit post</div>
+									<label class="flex items-center gap-2 text-sm text-slate-600">
+										<span>Visibility</span>
+										<select
+											name="visibility"
+											bind:value={editVisibility}
+											class="rounded-lg border-slate-300 py-1.5 text-sm"
+										>
+											{#each visibilityOptions as option (option.value)}
+												<option value={option.value}>{option.label}</option>
+											{/each}
+										</select>
+									</label>
+								</div>
+
 								<PostEditor name="content" bind:content={editContent} maxWords={100} mode="plain" />
 
 								<div class="flex flex-wrap items-center justify-between gap-3">
@@ -203,7 +271,7 @@
 										</p>
 									{:else}
 										<p class="text-sm text-slate-500">
-											Editing a private post from {formatPostDate(post.created_at)}.
+											Editing a {visibilityLabel(editVisibility).toLowerCase()} post.
 										</p>
 									{/if}
 
@@ -231,6 +299,28 @@
 							</form>
 						{:else}
 							<div class="space-y-4">
+								<div class="flex flex-wrap items-center justify-between gap-3">
+									<div class="text-sm text-slate-500">
+										{#if post.author?.username}
+											<a
+												href={resolve(`/u/${post.author.username}`)}
+												class="font-medium text-slate-900 hover:underline"
+											>
+												{authorName(post)}
+											</a>
+											<span class="ml-1">@{post.author.username}</span>
+										{:else}
+											<span class="font-medium text-slate-900">{authorName(post)}</span>
+										{/if}
+									</div>
+
+									<span
+										class={`rounded-full px-2 py-0.5 text-xs font-medium ${visibilityClass(post.visibility)}`}
+									>
+										{visibilityLabel(post.visibility)}
+									</span>
+								</div>
+
 								<p class="leading-7 wrap-break-word whitespace-pre-wrap text-slate-900">
 									{post.content}
 								</p>
@@ -241,12 +331,6 @@
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 										<span>{post.word_count} {post.word_count === 1 ? 'word' : 'words'}</span>
 										<span aria-hidden="true">/</span>
-										<span
-											class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-										>
-											Private
-										</span>
-										<span aria-hidden="true">/</span>
 										<time datetime={post.created_at}>{formatPostDate(post.created_at)}</time>
 										{#if wasEdited(post)}
 											<span aria-hidden="true">/</span>
@@ -254,45 +338,47 @@
 										{/if}
 									</div>
 
-									<div class="flex items-center gap-2">
-										<button
-											type="button"
-											disabled={deletingPostID === post.id}
-											class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-											onclick={() => startEditing(post)}
-										>
-											Edit
-										</button>
-
-										<form
-											method="POST"
-											action="?/delete"
-											onsubmit={(event) => {
-												if (!confirm('Delete this post? This cannot be undone.')) {
-													event.preventDefault();
-												}
-											}}
-											use:enhance={() => {
-												deletingPostID = post.id;
-
-												return async ({ update }) => {
-													await update();
-													deletingPostID = null;
-												};
-											}}
-										>
-											<input type="hidden" name="postID" value={post.id} />
-
+									{#if isOwned}
+										<div class="flex items-center gap-2">
 											<button
-												type="submit"
+												type="button"
 												disabled={deletingPostID === post.id}
-												class="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-												aria-label="Delete post"
+												class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+												onclick={() => startEditing(post)}
 											>
-												{deletingPostID === post.id ? 'Deleting...' : 'Delete'}
+												Edit
 											</button>
-										</form>
-									</div>
+
+											<form
+												method="POST"
+												action="?/delete"
+												onsubmit={(event) => {
+													if (!confirm('Delete this post? This cannot be undone.')) {
+														event.preventDefault();
+													}
+												}}
+												use:enhance={() => {
+													deletingPostID = post.id;
+
+													return async ({ update }) => {
+														await update();
+														deletingPostID = null;
+													};
+												}}
+											>
+												<input type="hidden" name="postID" value={post.id} />
+
+												<button
+													type="submit"
+													disabled={deletingPostID === post.id}
+													class="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+													aria-label="Delete post"
+												>
+													{deletingPostID === post.id ? 'Deleting...' : 'Delete'}
+												</button>
+											</form>
+										</div>
+									{/if}
 								</footer>
 							</div>
 						{/if}

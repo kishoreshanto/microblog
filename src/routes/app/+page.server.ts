@@ -1,5 +1,7 @@
 import { fail, redirect, type Actions } from '@sveltejs/kit';
 import { z } from 'zod';
+import { postVisibilitySchema } from '$lib/server/validators/social';
+import type { Database } from '$lib/types/database';
 import { countWords, isWithinWordLimit } from '$lib/utils/words';
 import type { PageServerLoad } from './$types';
 
@@ -13,62 +15,145 @@ const postContentSchema = z.object({
 		})
 });
 
+const postFormSchema = postContentSchema.extend({
+	visibility: postVisibilitySchema.default('private')
+});
+
 const postIDSchema = z.object({
 	postID: z.string().uuid('Invalid post.')
 });
 
+type PostRow = Database['public']['Tables']['posts']['Row'];
+type ProfileRow = Pick<
+	Database['public']['Tables']['profiles']['Row'],
+	'id' | 'username' | 'display_name'
+>;
+
+type FeedPostRow = PostRow & {
+	profiles: ProfileRow | ProfileRow[] | null;
+};
+
+function normalizeFeedPost(post: FeedPostRow) {
+	const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+
+	return {
+		id: post.id,
+		author_id: post.author_id,
+		content: post.content,
+		word_count: post.word_count,
+		visibility: post.visibility,
+		created_at: post.created_at,
+		updated_at: post.updated_at,
+		author: profile
+			? {
+					id: profile.id,
+					username: profile.username,
+					display_name: profile.display_name
+				}
+			: null
+	};
+}
+
+function mergeFeedPosts(groups: FeedPostRow[][]) {
+	const posts = new Map<string, ReturnType<typeof normalizeFeedPost>>();
+
+	for (const group of groups) {
+		for (const post of group) {
+			posts.set(post.id, normalizeFeedPost(post));
+		}
+	}
+
+	return Array.from(posts.values()).sort(
+		(a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+	);
+}
+
+const feedSelect =
+	'id, author_id, content, word_count, visibility, created_at, updated_at, profiles:author_id(id, username, display_name)';
+
 export const load: PageServerLoad = async ({ locals, parent }) => {
-	// Auth guard and user data are handled by the parent app layout.
-	// Using parent() avoids a redundant safeGetSession() call.
 	const { user } = await parent();
 
 	if (!user) {
 		throw redirect(303, '/auth/login');
 	}
 
-	// Query for getting all posts
-	const { data: posts, error } = await locals.supabase
-		.from('posts')
-		.select('id, content, word_count, visibility, created_at, updated_at')
-		.eq('author_id', user.id)
-		.eq('visibility', 'private')
-		.order('created_at', { ascending: false });
+	const { data: follows, error: followsError } = await locals.supabase
+		.from('follows')
+		.select('following_id')
+		.eq('follower_id', user.id)
+		.eq('status', 'approved');
 
-	// if something goes wrong
-	if (error) {
+	if (followsError) {
 		return {
 			posts: [],
-			loaderror: 'Could not load your posts.'
+			currentUserId: user.id,
+			loaderror: 'Could not load your feed.'
 		};
 	}
 
-	// If everything is ok
+	const followingIds = follows?.map((follow) => follow.following_id) ?? [];
+
+	const { data: ownPosts, error: ownError } = await locals.supabase
+		.from('posts')
+		.select(feedSelect)
+		.eq('author_id', user.id)
+		.order('created_at', { ascending: false });
+
+	const { data: publicPosts, error: publicError } = await locals.supabase
+		.from('posts')
+		.select(feedSelect)
+		.eq('visibility', 'public')
+		.neq('author_id', user.id)
+		.order('created_at', { ascending: false });
+
+	const followersQuery =
+		followingIds.length > 0
+			? await locals.supabase
+					.from('posts')
+					.select(feedSelect)
+					.eq('visibility', 'followers')
+					.in('author_id', followingIds)
+					.order('created_at', { ascending: false })
+			: { data: [], error: null };
+
+	if (ownError || publicError || followersQuery.error) {
+		return {
+			posts: [],
+			currentUserId: user.id,
+			loaderror: 'Could not load your feed.'
+		};
+	}
+
 	return {
-		posts,
+		posts: mergeFeedPosts([
+			(ownPosts ?? []) as FeedPostRow[],
+			(publicPosts ?? []) as FeedPostRow[],
+			(followersQuery.data ?? []) as FeedPostRow[]
+		]),
+		currentUserId: user.id,
 		loaderror: null
 	};
 };
 
-// Form action
 export const actions: Actions = {
 	create: async ({ locals, request }) => {
 		const { session, user } = await locals.safeGetSession();
 
-		// No session or no user? Throw away
 		if (!session || !user) {
 			throw redirect(303, '/auth/login');
 		}
 
 		const formData = await request.formData();
 		const content = String(formData.get('content') ?? '');
-
-		// Pasring the data using Zod
-		const parsedContent = postContentSchema.safeParse({ content });
+		const visibility = String(formData.get('visibility') ?? 'private');
+		const parsedContent = postFormSchema.safeParse({ content, visibility });
 
 		if (!parsedContent.success) {
 			return fail(400, {
 				action: 'create',
 				content,
+				visibility,
 				error: parsedContent.error.issues[0]?.message ?? 'Invalid post.'
 			});
 		}
@@ -76,18 +161,18 @@ export const actions: Actions = {
 		const trimmedContent = parsedContent.data.content;
 		const wordCount = countWords(trimmedContent);
 
-		// Insert the new post into the database
 		const { error } = await locals.supabase.from('posts').insert({
 			author_id: user.id,
 			content: trimmedContent,
 			word_count: wordCount,
-			visibility: 'private'
+			visibility: parsedContent.data.visibility
 		});
 
 		if (error) {
 			return fail(500, {
 				action: 'create',
 				content: trimmedContent,
+				visibility: parsedContent.data.visibility,
 				error: 'Could not save your post'
 			});
 		}
@@ -108,14 +193,16 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const postID = String(formData.get('postID') ?? '');
 		const content = String(formData.get('content') ?? '');
+		const visibility = String(formData.get('visibility') ?? 'private');
 		const parsedID = postIDSchema.safeParse({ postID });
-		const parsedContent = postContentSchema.safeParse({ content });
+		const parsedContent = postFormSchema.safeParse({ content, visibility });
 
 		if (!parsedID.success) {
 			return fail(400, {
 				action: 'update',
 				postID,
 				content,
+				visibility,
 				error: parsedID.error.issues[0]?.message ?? 'Invalid post.'
 			});
 		}
@@ -125,6 +212,7 @@ export const actions: Actions = {
 				action: 'update',
 				postID,
 				content,
+				visibility,
 				error: parsedContent.error.issues[0]?.message ?? 'Invalid post.'
 			});
 		}
@@ -137,6 +225,7 @@ export const actions: Actions = {
 			.update({
 				content: trimmedContent,
 				word_count: wordCount,
+				visibility: parsedContent.data.visibility,
 				updated_at: new Date().toISOString()
 			})
 			.eq('author_id', user.id)
@@ -148,6 +237,7 @@ export const actions: Actions = {
 				action: 'update',
 				postID,
 				content: trimmedContent,
+				visibility: parsedContent.data.visibility,
 				error: 'Could not update your post.'
 			});
 		}
@@ -157,6 +247,7 @@ export const actions: Actions = {
 				action: 'update',
 				postID,
 				content: trimmedContent,
+				visibility: parsedContent.data.visibility,
 				error: 'Post not found.'
 			});
 		}
@@ -176,10 +267,8 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const postID = String(formData.get('postID') ?? '');
-
 		const parsedID = postIDSchema.safeParse({ postID });
 
-		// in case of error
 		if (!parsedID.success) {
 			return fail(400, {
 				action: 'delete',
