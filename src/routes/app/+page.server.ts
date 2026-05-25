@@ -1,9 +1,9 @@
-import { countWords, isWithinWordLimit } from '$lib/utils/words';
-import {z} from 'zod';
-import type { PageServerLoad } from './$types';
 import { fail, redirect, type Actions } from '@sveltejs/kit';
+import { z } from 'zod';
+import { countWords, isWithinWordLimit } from '$lib/utils/words';
+import type { PageServerLoad } from './$types';
 
-const createPostSchema = z.object({
+const postContentSchema = z.object({
 	content: z
 		.string()
 		.trim()
@@ -13,9 +13,8 @@ const createPostSchema = z.object({
 		})
 });
 
-const deletePostSchema = z.object({
+const postIDSchema = z.object({
 	postID: z.string().uuid('Invalid post.')
-
 });
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -23,7 +22,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	// No session or no user? Throw away
 	if (!session || !user) {
-		throw redirect(303, 'app/login');
+		throw redirect(303, '/auth/login');
 	}
 
 	// Query for getting all posts
@@ -63,10 +62,11 @@ export const actions: Actions = {
 		const content = String(formData.get('content') ?? '');
 
 		// Pasring the data using Zod
-		const parsedContent = createPostSchema.safeParse({ content });
+		const parsedContent = postContentSchema.safeParse({ content });
 
 		if (!parsedContent.success) {
 			return fail(400, {
+				action: 'create',
 				content,
 				error: parsedContent.error.issues[0]?.message ?? 'Invalid post.'
 			});
@@ -85,52 +85,122 @@ export const actions: Actions = {
 
 		if (error) {
 			return fail(500, {
+				action: 'create',
 				content: trimmedContent,
 				error: 'Could not save your post'
 			});
 		}
 
 		return {
+			action: 'create',
 			success: true
 		};
 	},
 
-	delete: async ({locals, request}) => {
-		const {user} = await locals.safeGetSession();
+	update: async ({ locals, request }) => {
+		const { user } = await locals.safeGetSession();
 
-		if(!user) {
-			throw redirect (303, '/authlogin');
+		if (!user) {
+			throw redirect(303, '/auth/login');
+		}
+
+		const formData = await request.formData();
+		const postID = String(formData.get('postID') ?? '');
+		const content = String(formData.get('content') ?? '');
+		const parsedID = postIDSchema.safeParse({ postID });
+		const parsedContent = postContentSchema.safeParse({ content });
+
+		if (!parsedID.success) {
+			return fail(400, {
+				action: 'update',
+				postID,
+				content,
+				error: parsedID.error.issues[0]?.message ?? 'Invalid post.'
+			});
+		}
+
+		if (!parsedContent.success) {
+			return fail(400, {
+				action: 'update',
+				postID,
+				content,
+				error: parsedContent.error.issues[0]?.message ?? 'Invalid post.'
+			});
+		}
+
+		const trimmedContent = parsedContent.data.content;
+		const wordCount = countWords(trimmedContent);
+
+		const { data: updatedPosts, error } = await locals.supabase
+			.from('posts')
+			.update({
+				content: trimmedContent,
+				word_count: wordCount,
+				updated_at: new Date().toISOString()
+			})
+			.eq('author_id', user.id)
+			.eq('id', parsedID.data.postID)
+			.select('id');
+
+		if (error) {
+			return fail(500, {
+				action: 'update',
+				postID,
+				content: trimmedContent,
+				error: 'Could not update your post.'
+			});
+		}
+
+		if (!updatedPosts || updatedPosts.length === 0) {
+			return fail(404, {
+				action: 'update',
+				postID,
+				content: trimmedContent,
+				error: 'Post not found.'
+			});
+		}
+
+		return {
+			action: 'update',
+			success: true
+		};
+	},
+
+	delete: async ({ locals, request }) => {
+		const { user } = await locals.safeGetSession();
+
+		if (!user) {
+			throw redirect(303, '/authlogin');
 		}
 
 		const formData = await request.formData();
 		const postID = String(formData.get('postID') ?? '');
 
-		const parsedID = deletePostSchema.safeParse({postID});
+		const parsedID = postIDSchema.safeParse({ postID });
 
 		// in case of error
-		if(!parsedID.success) {
+		if (!parsedID.success) {
 			return fail(400, {
 				action: 'delete',
 				error: parsedID.error.issues[0]?.message ?? 'Invalid post.'
 			});
 		}
 
-		const {data: deletedPosts, error} = await locals.supabase
+		const { data: deletedPosts, error } = await locals.supabase
 			.from('posts')
 			.delete()
 			.eq('author_id', user.id)
 			.eq('id', parsedID.data.postID)
 			.select('id');
 
-		if(error) {
+		if (error) {
 			return fail(500, {
 				action: 'delete',
-				error: 'Invalid Post.'
-
-			})
+				error: 'Could not delete your post.'
+			});
 		}
 
-		if(!deletedPosts || deletedPosts.length === 0) {
+		if (!deletedPosts || deletedPosts.length === 0) {
 			return fail(404, {
 				action: 'delete',
 				error: 'Post Not Found'
@@ -141,6 +211,5 @@ export const actions: Actions = {
 			action: 'delete',
 			success: true
 		};
-
 	}
 };
