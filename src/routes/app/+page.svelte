@@ -227,7 +227,7 @@
 			<div class="space-y-3">
 				{#each data.posts as post (post.id)}
 					{@const isOwned = post.author_id === data.currentUserId}
-					<article class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+					<article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
 						{#if editingPostID === post.id}
 							<form
 								method="POST"
@@ -302,15 +302,18 @@
 						{:else}
 							<div class="space-y-4">
 								<div class="flex flex-wrap items-center justify-between gap-3">
-									<div class="text-sm text-slate-500">
+									<div class="text-sm text-slate-500 flex items-center gap-2">
 										{#if post.author?.username}
+										<img alt="avatar_{post.author.username}" src="https://api.dicebear.com/9.x/initials/svg?seed={post.author.username}"class="w-10 rounded-full" />
+										<div class="flex flex-col">
 											<a
 												href={resolve(`/u/${post.author.username}`)}
 												class="font-medium text-slate-900 hover:underline"
 											>
 												{authorName(post)}
-											</a>
-											<span class="ml-1">@{post.author.username}</span>
+											</a><span>@{post.author.username}</span>
+										</div>
+											
 										{:else}
 											<span class="font-medium text-slate-900">{authorName(post)}</span>
 										{/if}

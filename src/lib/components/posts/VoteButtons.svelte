@@ -56,7 +56,7 @@
 		type="button"
 		disabled={isPending}
 		aria-pressed={userVote === 'like'}
-		class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 aria-pressed:border-emerald-200 aria-pressed:bg-emerald-50 aria-pressed:text-emerald-700"
+		class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 aria-pressed:border-emerald-200 aria-pressed:bg-emerald-50 aria-pressed:text-emerald-700"
 		onclick={() => vote('like')}
 	>
 		<span aria-hidden="true">↑</span>
@@ -67,7 +67,7 @@
 		type="button"
 		disabled={isPending}
 		aria-pressed={userVote === 'dislike'}
-		class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 aria-pressed:border-red-200 aria-pressed:bg-red-50 aria-pressed:text-red-700"
+		class="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 aria-pressed:border-red-200 aria-pressed:bg-red-50 aria-pressed:text-red-700"
 		onclick={() => vote('dislike')}
 	>
 		<span aria-hidden="true">↓</span>
