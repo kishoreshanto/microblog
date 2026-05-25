@@ -17,11 +17,12 @@ const postIDSchema = z.object({
 	postID: z.string().uuid('Invalid post.')
 });
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const { session, user } = await locals.safeGetSession();
+export const load: PageServerLoad = async ({ locals, parent }) => {
+	// Auth guard and user data are handled by the parent app layout.
+	// Using parent() avoids a redundant safeGetSession() call.
+	const { user } = await parent();
 
-	// No session or no user? Throw away
-	if (!session || !user) {
+	if (!user) {
 		throw redirect(303, '/auth/login');
 	}
 
@@ -170,7 +171,7 @@ export const actions: Actions = {
 		const { user } = await locals.safeGetSession();
 
 		if (!user) {
-			throw redirect(303, '/authlogin');
+			throw redirect(303, '/auth/login');
 		}
 
 		const formData = await request.formData();
