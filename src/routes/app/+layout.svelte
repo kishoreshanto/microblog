@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	let { data, children } = $props();
 </script>
 
 <main class="min-h-screen bg-white text-neutral-950">
 	<header class="border-b border-neutral-200">
 		<div class="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-			<a href="/app" class="font-semibold">MicroBlog</a>
+			<a href={resolve('/app')} class="font-semibold">MicroBlog</a>
 
 			<div class="flex items-center gap-4">
 				{#if data.profile}
