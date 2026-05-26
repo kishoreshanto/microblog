@@ -115,14 +115,21 @@
 	<title>MicroBlog | App</title>
 </svelte:head>
 
-<section class="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
-	<header class="space-y-2">
+<section class="mx-auto flex flex-col gap-8 px-4">
+	<!-- <header class="space-y-2">
 		<p class="text-sm font-medium tracking-wide text-slate-500 uppercase">Home feed</p>
 		<h1 class="text-3xl font-bold tracking-tight text-slate-950">Your MicroBlog</h1>
 		<p class="text-slate-600">
 			Write short posts and read public or followers-only posts you are allowed to see.
 		</p>
-	</header>
+	</header> -->
+
+	<!-- Modal button for creating a new post -->
+	<button class="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-4 text-sm font-medium text-slate-950 hover:bg-slate-100 bg-linear-to-r from-blue-50 to-emerald-50 w-full justify-center">
+	<span class="text-center w-full">
+		What's on your mind? Share privately or with your followers and beyond
+	</span>
+	</button>
 
 	<form
 		method="POST"
@@ -193,10 +200,10 @@
 	</form>
 
 	<section class="space-y-4">
-		<div class="flex flex-wrap items-end justify-between gap-3">
-			<div>
+		<div class="flex justify-between gap-3">
+			<div class="flex flex-col w-full text-center">
 				<h2 class="text-xl font-semibold text-slate-950">Feed</h2>
-				<p class="mt-1 text-sm text-slate-500">{postCountLabel}</p>
+				<p class="mt-1 text-sm text-slate-500">See what your followers and others are thinking</p>
 			</div>
 
 			{#if form?.action === 'delete' && form.success}
@@ -390,7 +397,7 @@
 								</footer>
 
 								{#if post.visibility !== 'private'}
-									<div class="space-y-3 border-t border-slate-100 pt-4">
+									<div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
 										<VoteButtons
 											postId={post.id}
 											initialLikes={post.likes}
@@ -402,6 +409,7 @@
 											postId={post.id}
 											initialCount={post.commentCount}
 											currentUserId={data.currentUserId}
+											inline
 										/>
 									</div>
 								{/if}

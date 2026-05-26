@@ -1,13 +1,15 @@
 <script lang="ts">
 	import CommentCard, { type CommentView } from './CommentCard.svelte';
+	import commentIcon from '$lib/assets/comment-icon.svg';
 
 	type Props = {
 		postId: string;
 		initialCount: number;
 		currentUserId: string;
+		inline?: boolean;
 	};
 
-	let { postId, initialCount, currentUserId }: Props = $props();
+	let { postId, initialCount, currentUserId, inline = false }: Props = $props();
 
 	let isExpanded = $state(false);
 	let isLoaded = $state(false);
@@ -20,6 +22,15 @@
 	// svelte-ignore state_referenced_locally
 	let commentCount = $state(initialCount);
 	let topLevelComments = $derived(comments.filter((comment) => comment.parent_id === null));
+	let rootClass = $derived(inline ? 'contents' : 'space-y-3');
+	let toggleButtonClass = $derived(
+		inline
+			? 'inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 aria-pressed:border-slate-300 aria-pressed:bg-slate-100 aria-pressed:text-slate-900'
+			: 'text-sm font-medium text-slate-500 hover:text-slate-950'
+	);
+	let panelClass = $derived(
+		`space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-3${inline ? ' basis-full' : ''}`
+	);
 
 	function repliesFor(commentID: string) {
 		return comments.filter((comment) => comment.parent_id === commentID);
@@ -105,19 +116,23 @@
 	}
 </script>
 
-<section class="space-y-3">
+<section class={rootClass}>
 	<button
 		type="button"
-		class="text-sm font-medium text-slate-500 hover:text-slate-950"
+		aria-pressed={isExpanded}
+		class={toggleButtonClass}
 		onclick={toggleComments}
 	>
+	<span>
+		<img src={commentIcon} alt="" class="h-4 w-4" />
+	</span>
 		{isExpanded
 			? 'Hide comments'
-			: `${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`}
+			: `${commentCount}`}
 	</button>
 
 	{#if isExpanded}
-		<div class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+		<div class={panelClass}>
 			{#if isLoading}
 				<p class="text-sm text-slate-500">Loading comments...</p>
 			{:else}
