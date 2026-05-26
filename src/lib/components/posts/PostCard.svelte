@@ -54,7 +54,9 @@
 	let isUpdating = $state(false);
 	// svelte-ignore state_referenced_locally
 	let editContent = $state(
-		form?.action === updateFormAction && form.postID === post.id ? (form.content ?? '') : post.content
+		form?.action === updateFormAction && form.postID === post.id
+			? (form.content ?? '')
+			: post.content
 	);
 	// svelte-ignore state_referenced_locally
 	let editVisibility = $state<PostVisibility>(
@@ -70,9 +72,13 @@
 			: 'leading-7 wrap-break-word whitespace-pre-wrap text-slate-900'
 	);
 	let updateError = $derived(
-		form?.action === updateFormAction && form.postID === post.id ? (form.error ?? form.message) : null
+		form?.action === updateFormAction && form.postID === post.id
+			? (form.error ?? form.message)
+			: null
 	);
-	let deleteError = $derived(form?.action === deleteFormAction ? (form.error ?? form.message) : null);
+	let deleteError = $derived(
+		form?.action === deleteFormAction ? (form.error ?? form.message) : null
+	);
 
 	function startEditing() {
 		isEditing = true;

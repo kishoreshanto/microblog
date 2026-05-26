@@ -142,9 +142,7 @@
 	{:else if form?.action === 'requestFollow' && form.success}
 		<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Follow request sent.</p>
 	{:else if form?.action === 'cancelFollow' && form.success}
-		<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-			Follow request canceled.
-		</p>
+		<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Follow request canceled.</p>
 	{:else if form?.action === 'unfollow' && form.success}
 		<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
 			You are no longer following this profile.

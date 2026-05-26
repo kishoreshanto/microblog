@@ -79,10 +79,7 @@ async function attachInteractionData(
 
 	const [{ data: votes, error: votesError }, { data: comments, error: commentsError }] =
 		await Promise.all([
-			supabase
-				.from('post_votes')
-				.select('user_id, vote_type')
-				.eq('post_id', post.id),
+			supabase.from('post_votes').select('user_id, vote_type').eq('post_id', post.id),
 			supabase.from('comments').select('id').eq('post_id', post.id)
 		]);
 
@@ -109,11 +106,7 @@ async function attachInteractionData(
 	};
 }
 
-async function getPostByID(
-	supabase: App.Locals['supabase'],
-	postID: string,
-	userID: string
-) {
+async function getPostByID(supabase: App.Locals['supabase'], postID: string, userID: string) {
 	const { data: post, error } = await supabase
 		.from('posts')
 		.select(postSelect)

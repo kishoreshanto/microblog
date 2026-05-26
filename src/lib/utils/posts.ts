@@ -66,9 +66,7 @@ export function formatPostDate(value: string) {
 export function wasEdited(post: Pick<PostCardPost, 'created_at' | 'updated_at'>) {
 	if (!post.updated_at) return false;
 
-	return (
-		Math.abs(new Date(post.updated_at).getTime() - new Date(post.created_at).getTime()) > 1000
-	);
+	return Math.abs(new Date(post.updated_at).getTime() - new Date(post.created_at).getTime()) > 1000;
 }
 
 export function authorName(post: Pick<PostCardPost, 'author'>) {

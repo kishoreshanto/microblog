@@ -31,12 +31,7 @@
 
 <section class="space-y-3">
 	<div class="flex flex-wrap items-center gap-2" aria-label="Post actions">
-		<VoteButtons
-			{postId}
-			{initialLikes}
-			{initialDislikes}
-			{initialUserVote}
-		/>
+		<VoteButtons {postId} {initialLikes} {initialDislikes} {initialUserVote} />
 
 		<CommentToggleButton count={commentCount} bind:expanded={commentsExpanded} />
 		<ShareButton {postId} />
