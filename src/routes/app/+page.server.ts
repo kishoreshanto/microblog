@@ -88,15 +88,17 @@ async function attachInteractionData(
 		return posts;
 	}
 
-	const { data: votes, error: votesError } = await supabase
-		.from('post_votes')
-		.select('post_id, user_id, vote_type')
-		.in('post_id', interactivePostIds);
-
-	const { data: comments, error: commentsError } = await supabase
-		.from('comments')
-		.select('id, post_id')
-		.in('post_id', interactivePostIds);
+	const [{ data: votes, error: votesError }, { data: comments, error: commentsError }] =
+		await Promise.all([
+			supabase
+				.from('post_votes')
+				.select('post_id, user_id, vote_type')
+				.in('post_id', interactivePostIds),
+			supabase
+				.from('comments')
+				.select('id, post_id')
+				.in('post_id', interactivePostIds)
+		]);
 
 	if (votesError || commentsError) {
 		return posts;
@@ -134,20 +136,38 @@ async function attachInteractionData(
 const feedSelect =
 	'id, author_id, content, word_count, visibility, created_at, updated_at, profiles:author_id(id, username, display_name)';
 
-export const load: PageServerLoad = async ({ locals, parent }) => {
-	const { user } = await parent();
+export const load: PageServerLoad = async ({ locals }) => {
+	const { user } = await locals.safeGetSession();
 
 	if (!user) {
 		throw redirect(303, '/auth/login');
 	}
 
-	const { data: follows, error: followsError } = await locals.supabase
-		.from('follows')
-		.select('following_id')
-		.eq('follower_id', user.id)
-		.eq('status', 'approved');
+	// Run follows query, own posts, and public posts all in parallel
+	const [followsResult, ownResult, publicResult] = await Promise.all([
+		locals.supabase
+			.from('follows')
+			.select('following_id')
+			.eq('follower_id', user.id)
+			.eq('status', 'approved'),
+		locals.supabase
+			.from('posts')
+			.select(feedSelect)
+			.eq('author_id', user.id)
+			.order('created_at', { ascending: false }),
+		locals.supabase
+			.from('posts')
+			.select(feedSelect)
+			.eq('visibility', 'public')
+			.neq('author_id', user.id)
+			.order('created_at', { ascending: false })
+	]);
 
-	if (followsError) {
+	const { data: follows, error: followsError } = followsResult;
+	const { data: ownPosts, error: ownError } = ownResult;
+	const { data: publicPosts, error: publicError } = publicResult;
+
+	if (followsError || ownError || publicError) {
 		return {
 			posts: [],
 			currentUserId: user.id,
@@ -157,19 +177,7 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 	const followingIds = follows?.map((follow) => follow.following_id) ?? [];
 
-	const { data: ownPosts, error: ownError } = await locals.supabase
-		.from('posts')
-		.select(feedSelect)
-		.eq('author_id', user.id)
-		.order('created_at', { ascending: false });
-
-	const { data: publicPosts, error: publicError } = await locals.supabase
-		.from('posts')
-		.select(feedSelect)
-		.eq('visibility', 'public')
-		.neq('author_id', user.id)
-		.order('created_at', { ascending: false });
-
+	// Followers-only query depends on followingIds, so it runs after the first batch
 	const followersQuery =
 		followingIds.length > 0
 			? await locals.supabase
@@ -178,9 +186,9 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 					.eq('visibility', 'followers')
 					.in('author_id', followingIds)
 					.order('created_at', { ascending: false })
-			: { data: [], error: null };
+			: { data: [] as FeedPostRow[], error: null };
 
-	if (ownError || publicError || followersQuery.error) {
+	if (followersQuery.error) {
 		return {
 			posts: [],
 			currentUserId: user.id,

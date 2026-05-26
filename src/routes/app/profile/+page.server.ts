@@ -29,21 +29,33 @@ function normalizeFollowRequest(request: FollowRequestRow) {
 	};
 }
 
-export const load: PageServerLoad = async ({ locals, parent }) => {
-	const { user, profile } = await parent();
+export const load: PageServerLoad = async ({ locals }) => {
+	const { user } = await locals.safeGetSession();
 
-	if (!user || !profile) {
+	if (!user) {
 		throw redirect(303, '/auth/login');
 	}
 
-	const { data: pendingRequests, error } = await locals.supabase
-		.from('follows')
-		.select(
-			'id, created_at, follower:profiles!follows_follower_id_fkey(id, username, display_name)'
-		)
-		.eq('following_id', user.id)
-		.eq('status', 'pending')
-		.order('created_at', { ascending: true });
+	const [{ data: profile, error: profileError }, { data: pendingRequests, error }] =
+		await Promise.all([
+			locals.supabase
+				.from('profiles')
+				.select('id, username, display_name, bio, created_at, updated_at')
+				.eq('id', user.id)
+				.maybeSingle(),
+			locals.supabase
+				.from('follows')
+				.select(
+					'id, created_at, follower:profiles!follows_follower_id_fkey(id, username, display_name)'
+				)
+				.eq('following_id', user.id)
+				.eq('status', 'pending')
+				.order('created_at', { ascending: true })
+		]);
+
+	if (profileError || !profile) {
+		throw redirect(303, '/auth/login');
+	}
 
 	if (error) {
 		kitError(500, 'Could not load follow requests.');
