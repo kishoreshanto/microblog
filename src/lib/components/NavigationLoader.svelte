@@ -27,7 +27,9 @@
 		background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
 		border-radius: 0 2px 2px 0;
 		animation: nav-slide 1s ease-in-out infinite;
-		box-shadow: 0 0 10px rgba(99, 102, 241, 0.5), 0 0 5px rgba(99, 102, 241, 0.3);
+		box-shadow:
+			0 0 10px rgba(99, 102, 241, 0.5),
+			0 0 5px rgba(99, 102, 241, 0.3);
 	}
 
 	@keyframes nav-slide {

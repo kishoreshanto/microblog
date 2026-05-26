@@ -123,12 +123,10 @@
 		class={toggleButtonClass}
 		onclick={toggleComments}
 	>
-	<span>
-		<img src={commentIcon} alt="" class="h-4 w-4" />
-	</span>
-		{isExpanded
-			? 'Hide comments'
-			: `${commentCount}`}
+		<span>
+			<img src={commentIcon} alt="" class="h-4 w-4" />
+		</span>
+		{isExpanded ? 'Hide comments' : `${commentCount}`}
 	</button>
 
 	{#if isExpanded}
@@ -205,7 +203,7 @@
 						<button
 							type="submit"
 							disabled={isSubmitting || content.trim().length === 0 || content.trim().length > 500}
-							class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+							class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
 						>
 							{isSubmitting ? 'Posting...' : replyParent ? 'Reply' : 'Comment'}
 						</button>

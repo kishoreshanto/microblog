@@ -94,10 +94,7 @@ async function attachInteractionData(
 				.from('post_votes')
 				.select('post_id, user_id, vote_type')
 				.in('post_id', interactivePostIds),
-			supabase
-				.from('comments')
-				.select('id, post_id')
-				.in('post_id', interactivePostIds)
+			supabase.from('comments').select('id, post_id').in('post_id', interactivePostIds)
 		]);
 
 	if (votesError || commentsError) {
