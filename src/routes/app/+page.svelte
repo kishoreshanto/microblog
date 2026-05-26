@@ -224,7 +224,7 @@
 							<select
 								name="visibility"
 								bind:value={visibility}
-								class="rounded-lg border-slate-300 py-1.5 text-sm"
+								class="rounded-full border-slate-300 py-1.5 text-sm"
 							>
 								{#each visibilityOptions as option (option.value)}
 									<option value={option.value}>{option.label}</option>
@@ -430,7 +430,7 @@
 											<button
 												type="button"
 												disabled={deletingPostID === post.id}
-												class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+												class="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
 												onclick={() => startEditing(post)}
 											>
 												Edit
@@ -458,7 +458,7 @@
 												<button
 													type="submit"
 													disabled={deletingPostID === post.id}
-													class="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+													class="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
 													aria-label="Delete post"
 												>
 													{deletingPostID === post.id ? 'Deleting...' : 'Delete'}
