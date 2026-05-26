@@ -5,6 +5,7 @@
 	import PostEditor from '$lib/components/posts/PostEditor.svelte';
 	import VoteButtons from '$lib/components/posts/VoteButtons.svelte';
 	import { countWords } from '$lib/utils/words';
+	import { fade } from 'svelte/transition';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form } = $props<{
@@ -31,6 +32,8 @@
 	let isOverLimit = $derived(wordCount > 100);
 	let isFormatted = $state(false);
 	let isCreating = $state(false);
+	// svelte-ignore state_referenced_locally
+	let isCreateModalOpen = $state(form?.action === 'create' && !!form.error);
 	let deletingPostID = $state<string | null>(null);
 	let updatingPostID = $state<string | null>(null);
 	// svelte-ignore state_referenced_locally
@@ -109,11 +112,24 @@
 		editVisibility = 'private';
 		updatingPostID = null;
 	}
+
+	function closeCreateModal() {
+		isCreateModalOpen = false;
+		isCreating = false;
+	}
+
+	function handleWindowKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && isCreateModalOpen) {
+			closeCreateModal();
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>MicroBlog | App</title>
 </svelte:head>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <section class="mx-auto flex flex-col gap-8 px-4">
 	<!-- <header class="space-y-2">
@@ -125,79 +141,135 @@
 	</header> -->
 
 	<!-- Modal button for creating a new post -->
-	<button class="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-4 text-sm font-medium text-slate-950 hover:bg-slate-100 bg-linear-to-r from-blue-50 to-emerald-50 w-full justify-center">
-	<span class="text-center w-full">
-		What's on your mind? Share privately or with your followers and beyond
-	</span>
+	<button
+		type="button"
+		class="bg-linear-to-r flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 from-blue-50 to-emerald-50 px-4 py-4 text-base  font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 transform transition duration-150 ease-out hover:shadow-md cursor-pointer hover:border-slate-400"
+		onclick={() => (isCreateModalOpen = true)}
+	>
+		<span class="w-full text-center">
+			What's on your mind? Share privately or with your followers and beyond
+		</span>
 	</button>
 
-	<form
-		method="POST"
-		action="?/create"
-		use:enhance={() => {
-			isCreating = true;
-
-			return async ({ result, update }) => {
-				await update({ reset: false });
-				isCreating = false;
-
-				if (result.type === 'success') {
-					content = '';
-					visibility = 'private';
-				}
-			};
-		}}
-		class="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-	>
-		<div class="space-y-3">
-			<div class="flex flex-wrap items-center justify-between gap-3">
-				<label for="content" class="block text-sm font-medium text-slate-900"> New post </label>
-
-				<label class="flex items-center gap-2 text-sm text-slate-600">
-					<span>Visibility</span>
-					<select
-						name="visibility"
-						bind:value={visibility}
-						class="rounded-lg border-slate-300 py-1.5 text-sm"
-					>
-						{#each visibilityOptions as option (option.value)}
-							<option value={option.value}>{option.label}</option>
-						{/each}
-					</select>
-				</label>
-			</div>
-
-			<PostEditor
-				name="content"
-				bind:content
-				maxWords={100}
-				mode={isFormatted ? 'formatted' : 'plain'}
-			/>
-			<p class="text-sm text-slate-500">
-				{visibilityOptions.find((option) => option.value === visibility)?.help}
-			</p>
-		</div>
-
-		<div class="flex flex-wrap items-center justify-between gap-3">
-			<div class="min-h-9">
-				{#if form?.action === 'create' && form.error}
-					<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-						{form.error}
-					</p>
-				{:else if form?.action === 'create' && form.success}
-					<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Post saved.</p>
-				{/if}
-			</div>
-
+	{#if isCreateModalOpen}
+		<div
+			class="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+			transition:fade={{ duration: 120 }}
+		>
 			<button
-				type="submit"
-				disabled={isCreating || isOverLimit || wordCount === 0}
-				class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+				type="button"
+				class="absolute inset-0 bg-slate-950/60"
+				aria-label="Close post creation modal"
+				onclick={closeCreateModal}
+			></button>
+
+			<form
+				method="POST"
+				action="?/create"
+				aria-labelledby="create-post-title"
+				use:enhance={() => {
+					isCreating = true;
+
+					return async ({ result, update }) => {
+						await update({ reset: false });
+						isCreating = false;
+
+						if (result.type === 'success') {
+							content = '';
+							visibility = 'private';
+							isCreateModalOpen = false;
+						}
+					};
+				}}
+				class="relative z-10 max-h-[calc(100vh-3rem)] w-full max-w-2xl space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-2xl"
 			>
-				{isCreating ? 'Saving...' : 'Post'}
-			</button>
+				<div class="flex flex-wrap items-start justify-between gap-3">
+					<div>
+						<h2 id="create-post-title" class="text-lg font-semibold text-slate-950">New post</h2>
+						<p class="mt-1 text-sm text-slate-500">Share privately or with your audience.</p>
+					</div>
+
+					<button
+						type="button"
+						class="rounded-full border border-slate-200 p-2 text-sm text-slate-600 hover:bg-red-100 hover:text-red-900 hover:border-red-300"
+						aria-label="Close post creation modal"
+						onclick={closeCreateModal}
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							class="h-4 w-4"
+							aria-hidden="true"
+						>
+							<path d="M18 6L6 18" />
+							<path d="M6 6l12 12" />
+						</svg>
+						<span class="sr-only">Close</span>
+					</button>
+				</div>
+
+				<div class="space-y-3">
+					<div class="flex flex-wrap items-center justify-between gap-3">
+						<label for="content" class="block text-sm font-medium text-slate-900">
+							Post content
+						</label>
+
+						<label class="flex items-center gap-2 text-sm text-slate-600">
+							<span>Visibility</span>
+							<select
+								name="visibility"
+								bind:value={visibility}
+								class="rounded-lg border-slate-300 py-1.5 text-sm"
+							>
+								{#each visibilityOptions as option (option.value)}
+									<option value={option.value}>{option.label}</option>
+								{/each}
+							</select>
+						</label>
+					</div>
+
+					<PostEditor
+						name="content"
+						bind:content
+						maxWords={100}
+						mode={isFormatted ? 'formatted' : 'plain'}
+					/>
+					<p class="text-sm text-slate-500">
+						{visibilityOptions.find((option) => option.value === visibility)?.help}
+					</p>
+				</div>
+
+				<div class="flex flex-wrap items-center justify-between">
+					<div class="min-h-9">
+						{#if form?.action === 'create' && form.error}
+							<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+								{form.error}
+							</p>
+						{:else if form?.action === 'create' && form.success}
+							<p class="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Post saved.</p>
+						{/if}
+					</div>
+
+					<div class="flex items-center gap-2 w-full">
+						
+
+						<button
+							type="submit"
+							disabled={isCreating || isOverLimit || wordCount === 0}
+							class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-950 shadow-sm hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 w-full"
+						>
+							{isCreating ? 'Saving...' : 'Post'}
+						</button>
+					</div>
+				</div>
+			</form>
 		</div>
-	</form>
+	{/if}
 
 	<section class="space-y-4">
 		<div class="flex justify-between gap-3">
