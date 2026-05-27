@@ -1,35 +1,31 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
+	import Navbar from '$lib/components/app/Navbar.svelte';
+	import Footer from '$lib/components/app/Footer.svelte';
 
 	let { data, children } = $props();
 </script>
 
-<main class="min-h-screen bg-white text-neutral-950">
-	<header class="border-b border-neutral-200">
-		<div class="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-			<a href={resolve('/app')} class="font-semibold">MicroBlog</a>
+<div class="app-shell">
+	<Navbar profile={data.profile} />
 
-			<div class="flex items-center gap-4">
-				{#if data.profile}
-					<a
-						href={resolve(`/u/${data.profile.username}`)}
-						class="text-sm text-neutral-500 hover:text-neutral-950">@{data.profile.username}</a
-					>
-					<a href={resolve('/app/profile')} class="text-sm text-neutral-500 hover:text-neutral-950">
-						Profile
-					</a>
-				{/if}
-
-				<form method="POST" action="/auth/logout">
-					<button type="submit" class="text-sm text-neutral-500 hover:text-neutral-950"
-						>Sign out</button
-					>
-				</form>
-			</div>
+	<main class="app-main">
+		<div class="mx-auto max-w-4xl px-6 py-10">
+			{@render children()}
 		</div>
-	</header>
+	</main>
 
-	<div class="mx-auto max-w-4xl px-6 py-10">
-		{@render children()}
-	</div>
-</main>
+	<Footer />
+</div>
+
+<style>
+	.app-shell {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+		background: #fff;
+		color: #0a0a0a;
+	}
+	.app-main {
+		flex: 1;
+	}
+</style>
