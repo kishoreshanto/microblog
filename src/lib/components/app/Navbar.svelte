@@ -56,7 +56,6 @@
 			class="group flex items-center gap-2 text-[1.05rem] font-bold tracking-normal text-slate-950 no-underline transition-opacity duration-200 hover:opacity-80"
 			onclick={closeMenus}
 		>
-	
 			<img src={logo} alt="MicroBlog" width="30" height="30" />
 			<span class="text-slate-950">MicroBlog</span>
 		</a>
@@ -152,7 +151,6 @@
 							aria-labelledby="user-menu-btn"
 						>
 							<div class="flex items-center gap-2.5 px-2.5 pt-2.5 pb-2">
-								
 								<div>
 									<p class="text-[0.8125rem] font-semibold text-slate-950">
 										{profile.display_name || profile.username}
