@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { countWords } from '$lib/utils/words';
 	import type { PostCardPost, PostFormState, PostVisibility } from '$lib/types/posts';
+	import { fade } from 'svelte/transition';
 	import {
 		authorName,
 		formatPostDate,
@@ -51,6 +52,7 @@
 	// svelte-ignore state_referenced_locally
 	let isEditing = $state(form?.action === updateFormAction && form.postID === post.id);
 	let isDeleting = $state(false);
+	let isDeleteModalOpen = $state(false);
 	let isUpdating = $state(false);
 	// svelte-ignore state_referenced_locally
 	let editContent = $state(
@@ -92,7 +94,25 @@
 		editVisibility = post.visibility;
 		isUpdating = false;
 	}
+
+	function openDeleteModal() {
+		isDeleteModalOpen = true;
+	}
+
+	function closeDeleteModal() {
+		if (isDeleting) return;
+
+		isDeleteModalOpen = false;
+	}
+
+	function handleWindowKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && isDeleteModalOpen) {
+			closeDeleteModal();
+		}
+	}
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
 	{#if isEditing}
@@ -226,37 +246,124 @@
 							Edit
 						</button>
 
-						<form
-							method="POST"
-							action={deleteAction}
-							onsubmit={(event) => {
-								if (!confirm('Delete this post? This cannot be undone.')) {
-									event.preventDefault();
-								}
-							}}
-							use:enhance={() => {
-								isDeleting = true;
-
-								return async ({ update }) => {
-									await update();
-									isDeleting = false;
-								};
-							}}
+						<button
+							type="button"
+							disabled={isDeleting}
+							class="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+							aria-label="Delete post"
+							onclick={openDeleteModal}
 						>
-							<input type="hidden" name="postID" value={post.id} />
-
-							<button
-								type="submit"
-								disabled={isDeleting}
-								class="rounded-full border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-								aria-label="Delete post"
-							>
-								{isDeleting ? 'Deleting...' : 'Delete'}
-							</button>
-						</form>
+							Delete
+						</button>
 					</div>
 				{/if}
 			</footer>
+
+			{#if isDeleteModalOpen}
+				<div
+					class="fixed inset-0 z-[1000] flex min-h-dvh w-dvw items-center justify-center px-4 py-6"
+					transition:fade={{ duration: 120 }}
+				>
+					<button
+						type="button"
+						class="fixed inset-0 h-dvh w-dvw bg-slate-950/60"
+						aria-label="Close delete confirmation"
+						disabled={isDeleting}
+						onclick={closeDeleteModal}
+					></button>
+
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby={`delete-post-title-${post.id}`}
+						aria-describedby={`delete-post-description-${post.id}`}
+						class="relative z-10 w-full max-w-md space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-2xl"
+					>
+						<form
+							method="POST"
+							action={deleteAction}
+							use:enhance={() => {
+								isDeleting = true;
+
+								return async ({ result, update }) => {
+									await update();
+									isDeleting = false;
+
+									if (result.type === 'success') {
+										isDeleteModalOpen = false;
+									}
+								};
+							}}
+							class="space-y-4"
+						>
+							<input type="hidden" name="postID" value={post.id} />
+
+							<div class="space-y-2">
+								<h2
+									id={`delete-post-title-${post.id}`}
+									class="text-lg font-semibold text-slate-950"
+								>
+									Delete post?
+								</h2>
+								<p
+									id={`delete-post-description-${post.id}`}
+									class="text-sm leading-6 text-slate-600"
+								>
+									This will permanently remove the post and its activity. This cannot be undone.
+								</p>
+							</div>
+
+							{#if deleteError}
+								<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{deleteError}</p>
+							{/if}
+
+							<div class="flex flex-wrap items-center justify-end gap-2">
+								<button
+									type="button"
+									disabled={isDeleting}
+									class="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+									onclick={closeDeleteModal}
+								>
+									Cancel
+								</button>
+
+								<button
+									type="submit"
+									disabled={isDeleting}
+									class="inline-flex min-w-24 items-center justify-center gap-2 rounded-full border border-red-200 bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:border-red-200 disabled:bg-red-200"
+								>
+									{#if isDeleting}
+										<svg
+											class="h-4 w-4 animate-spin"
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+											aria-hidden="true"
+										>
+											<circle
+												class="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												stroke-width="4"
+											></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+											></path>
+										</svg>
+										<span>Deleting</span>
+									{:else}
+										Delete post
+									{/if}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			{/if}
 
 			{#if deleteError}
 				<p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{deleteError}</p>
