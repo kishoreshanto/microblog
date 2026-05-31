@@ -96,10 +96,26 @@
 			<button
 				type="button"
 				disabled={isDeleting}
-				class="text-sm font-medium text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+				class="inline-flex min-w-12 items-center justify-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
 				onclick={deleteComment}
 			>
-				{isDeleting ? 'Deleting...' : 'Delete'}
+				{#if isDeleting}
+					<svg
+						class="h-3.5 w-3.5 animate-spin"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+					>
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+						></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+						></path>
+					</svg>
+					<span class="sr-only">Deleting comment</span>
+				{:else}
+					Delete
+				{/if}
 			</button>
 		{/if}
 

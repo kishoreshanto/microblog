@@ -111,7 +111,24 @@
 {#if expanded}
 	<section class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
 		{#if isLoading}
-			<p class="text-sm text-slate-500">Loading comments...</p>
+			<div class="space-y-3" aria-label="Loading comments" role="status">
+				<span class="sr-only">Loading comments</span>
+				{#each Array(2) as _, index (index)}
+					<div class="animate-pulse rounded-3xl border border-slate-200 bg-white p-3">
+						<div class="flex items-center gap-2">
+							<div class="h-10 w-10 rounded-full bg-slate-200"></div>
+							<div class="space-y-2">
+								<div class="h-3 w-28 rounded-full bg-slate-200"></div>
+								<div class="h-3 w-20 rounded-full bg-slate-100"></div>
+							</div>
+						</div>
+						<div class="mt-4 space-y-2">
+							<div class="h-3 w-full rounded-full bg-slate-200"></div>
+							<div class="h-3 w-2/3 rounded-full bg-slate-100"></div>
+						</div>
+					</div>
+				{/each}
+			</div>
 		{:else}
 			<div class="space-y-3">
 				{#each topLevelComments as comment (comment.id)}
@@ -182,9 +199,33 @@
 					<button
 						type="submit"
 						disabled={isSubmitting || content.trim().length === 0 || content.trim().length > 500}
-						class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+						class="inline-flex min-w-24 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
 					>
-						{isSubmitting ? 'Posting...' : replyParent ? 'Reply' : 'Comment'}
+						{#if isSubmitting}
+							<svg
+								class="h-4 w-4 animate-spin"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								aria-hidden="true"
+							>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+								></path>
+							</svg>
+							<span class="sr-only">Posting comment</span>
+						{:else if replyParent}
+							Reply
+						{:else}
+							Comment
+						{/if}
 					</button>
 				</div>
 			</form>
