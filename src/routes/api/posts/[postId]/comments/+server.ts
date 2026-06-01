@@ -1,5 +1,6 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { createCommentSchema } from '$lib/server/validators/interactions';
+import { createNotification, fetchNotificationPanelData } from '$lib/server/notifications';
 import type { Database } from '$lib/types/database';
 
 type ProfileRow = Pick<
@@ -65,7 +66,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
 	return json({
 		comments: await loadComments(locals.supabase, parsed.data.postID),
-		currentUserId: user.id
+		currentUserId: user.id,
+		notificationPanel: await fetchNotificationPanelData(locals.supabase, user.id)
 	});
 };
 
@@ -117,6 +119,41 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 
 	if (insertError) {
 		error(400, 'Could not save comment.');
+	}
+
+	// Notify the post owner about the new comment
+	const { data: post } = await locals.supabase
+		.from('posts')
+		.select('author_id')
+		.eq('id', parsed.data.postID)
+		.maybeSingle();
+
+	if (post) {
+		await createNotification(locals.supabase, {
+			recipientId: post.author_id,
+			actorId: user.id,
+			kind: 'post_comment',
+			postId: parsed.data.postID
+		});
+	}
+
+	// If this is a reply, also notify the parent comment author
+	if (parsed.data.parentID) {
+		const { data: parentComment } = await locals.supabase
+			.from('comments')
+			.select('author_id')
+			.eq('id', parsed.data.parentID)
+			.maybeSingle();
+
+		if (parentComment) {
+			await createNotification(locals.supabase, {
+				recipientId: parentComment.author_id,
+				actorId: user.id,
+				kind: 'comment_reply',
+				postId: parsed.data.postID,
+				commentId: parsed.data.parentID
+			});
+		}
 	}
 
 	return json({

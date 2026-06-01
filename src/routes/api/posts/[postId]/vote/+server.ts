@@ -5,6 +5,7 @@ import {
 	voteTypeToValue,
 	voteValueToType
 } from '$lib/server/validators/interactions';
+import { createNotification, fetchNotificationPanelData } from '$lib/server/notifications';
 
 async function getVoteSummary(supabase: App.Locals['supabase'], postID: string, userID: string) {
 	const { data: votes, error: votesError } = await supabase
@@ -62,7 +63,26 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		error(400, 'Could not save vote.');
 	}
 
-	return json(await getVoteSummary(locals.supabase, parsed.data.postID, user.id));
+	// Create post_vote notification for the post owner
+	const { data: post } = await locals.supabase
+		.from('posts')
+		.select('author_id')
+		.eq('id', parsed.data.postID)
+		.maybeSingle();
+
+	if (post) {
+		await createNotification(locals.supabase, {
+			recipientId: post.author_id,
+			actorId: user.id,
+			kind: 'post_vote',
+			postId: parsed.data.postID
+		});
+	}
+
+	return json({
+		...(await getVoteSummary(locals.supabase, parsed.data.postID, user.id)),
+		notificationPanel: await fetchNotificationPanelData(locals.supabase, user.id)
+	});
 };
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
@@ -90,5 +110,8 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 		error(400, 'Could not remove vote.');
 	}
 
-	return json(await getVoteSummary(locals.supabase, parsed.data.postID, user.id));
+	return json({
+		...(await getVoteSummary(locals.supabase, parsed.data.postID, user.id)),
+		notificationPanel: await fetchNotificationPanelData(locals.supabase, user.id)
+	});
 };

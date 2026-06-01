@@ -1,4 +1,5 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
+import { fetchNotificationPanelData } from '$lib/server/notifications';
 import { deleteCommentSchema } from '$lib/server/validators/interactions';
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
@@ -34,6 +35,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 
 	return json({
 		postID: deleted.post_id,
-		deleted: true
+		deleted: true,
+		notificationPanel: await fetchNotificationPanelData(locals.supabase, user.id)
 	});
 };
