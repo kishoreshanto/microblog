@@ -1,4 +1,5 @@
 import { error as kitError, redirect } from '@sveltejs/kit';
+import { fetchNotificationPanelData } from '$lib/server/notifications';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
@@ -35,6 +36,9 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 	return {
 		user,
-		profile
+		profile,
+		notificationPanel: profile
+			? await fetchNotificationPanelData(locals.supabase, user.id)
+			: { notifications: [], unreadCount: 0 }
 	};
 };

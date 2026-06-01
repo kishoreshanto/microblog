@@ -1,6 +1,7 @@
 import { error as kitError, fail, redirect, type Actions } from '@sveltejs/kit';
 import { z } from 'zod';
 import { profileSchema } from '$lib/server/validators/social';
+import { createNotification } from '$lib/server/notifications';
 import type { Database } from '$lib/types/database';
 import type { PageServerLoad } from './$types';
 
@@ -155,6 +156,22 @@ export const actions: Actions = {
 			return fail(error ? 500 : 404, {
 				action: 'approveFollow',
 				message: error ? 'Could not approve follow request.' : 'Follow request not found.'
+			});
+		}
+
+		// Create follow_accepted notification for the original requester
+		const { data: follow } = await locals.supabase
+			.from('follows')
+			.select('follower_id')
+			.eq('id', parsed.data.followID)
+			.maybeSingle();
+
+		if (follow) {
+			await createNotification(locals.supabase, {
+				recipientId: follow.follower_id,
+				actorId: user.id,
+				kind: 'follow_accepted',
+				followId: parsed.data.followID
 			});
 		}
 

@@ -1,6 +1,7 @@
 import { error as kitError, fail, redirect, type Actions } from '@sveltejs/kit';
 import { z } from 'zod';
 import { postVisibilitySchema } from '$lib/server/validators/social';
+import { createNotification } from '$lib/server/notifications';
 import type { Database } from '$lib/types/database';
 import { countWords, isWithinWordLimit } from '$lib/utils/words';
 import type { PageServerLoad } from './$types';
@@ -183,6 +184,22 @@ export const actions: Actions = {
 						: 'Could not request follow access.'
 			});
 		}
+
+		// Create follow_request notification for the target user
+		// Fetch the follow ID for the notification link
+		const { data: follow } = await locals.supabase
+			.from('follows')
+			.select('id')
+			.eq('follower_id', user.id)
+			.eq('following_id', profile.id)
+			.maybeSingle();
+
+		await createNotification(locals.supabase, {
+			recipientId: profile.id,
+			actorId: user.id,
+			kind: 'follow_request',
+			followId: follow?.id ?? undefined
+		});
 
 		return {
 			action: 'requestFollow',
