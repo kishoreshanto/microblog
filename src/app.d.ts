@@ -2,6 +2,7 @@
 // for information about these interfaces
 
 import type { Database } from '$lib/types/database';
+import type { NotificationPanelData } from '$lib/types/notifications';
 import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 type SafeSession = {
@@ -26,6 +27,7 @@ declare global {
 		interface PageData {
 			session: Session | null;
 			user: User | null;
+			notificationPanel?: NotificationPanelData;
 		}
 	}
 }
