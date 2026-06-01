@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { NotificationPanelData } from '$lib/types/notifications';
+	import { dispatchNotificationPanelUpdate } from '$lib/utils/notifications';
 	import CommentCard, { type CommentView } from './CommentCard.svelte';
 
 	type Props = {
@@ -79,6 +81,7 @@
 		const result = (await response.json()) as {
 			comments: CommentView[];
 			currentUserId: string;
+			notificationPanel?: NotificationPanelData;
 		};
 
 		comments = result.comments;
@@ -86,6 +89,7 @@
 		content = '';
 		replyParent = null;
 		isLoaded = true;
+		dispatchNotificationPanelUpdate(result.notificationPanel);
 	}
 
 	function removeComment(comment: CommentView) {

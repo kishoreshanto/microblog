@@ -1,4 +1,7 @@
 <script lang="ts">
+	import type { NotificationPanelData } from '$lib/types/notifications';
+	import { dispatchNotificationPanelUpdate } from '$lib/utils/notifications';
+
 	type Vote = 'like' | 'dislike' | null;
 
 	type Props = {
@@ -43,11 +46,13 @@
 			likes: number;
 			dislikes: number;
 			userVote: Vote;
+			notificationPanel?: NotificationPanelData;
 		};
 
 		likes = result.likes;
 		dislikes = result.dislikes;
 		userVote = result.userVote;
+		dispatchNotificationPanelUpdate(result.notificationPanel);
 	}
 </script>
 

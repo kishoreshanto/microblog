@@ -2,6 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/stores';
 	import logo from '$lib/assets/logo.png';
+	import type { NotificationPanelData } from '$lib/types/notifications';
+	import { notificationPanelUpdateEvent } from '$lib/utils/notifications';
+	import NotificationPanel from './NotificationPanel.svelte';
 
 	type Props = {
 		profile: {
@@ -9,11 +12,18 @@
 			display_name: string | null;
 			bio: string | null;
 		} | null;
+		notificationPanel?: NotificationPanelData;
 	};
 
-	let { profile }: Props = $props();
+	let { profile, notificationPanel = { notifications: [], unreadCount: 0 } }: Props = $props();
 	let mobileMenuOpen = $state(false);
 	let userMenuOpen = $state(false);
+	let isNotificationPanelOpen = $state(false);
+	// svelte-ignore state_referenced_locally
+	let notifications = $state(notificationPanel.notifications);
+	// svelte-ignore state_referenced_locally
+	let unreadCount = $state(notificationPanel.unreadCount);
+	let unreadBadge = $derived(unreadCount > 99 ? '99+' : String(unreadCount));
 
 	function getInitials(name: string): string {
 		const parts = name.trim().split(/\s+/);
@@ -37,14 +47,46 @@
 	function closeMenus() {
 		mobileMenuOpen = false;
 		userMenuOpen = false;
+		isNotificationPanelOpen = false;
 	}
+
+	function updateNotificationPanel(panelData: NotificationPanelData) {
+		notifications = panelData.notifications;
+		unreadCount = panelData.unreadCount;
+	}
+
+	function handleNotificationUpdate(event: Event) {
+		updateNotificationPanel((event as CustomEvent<NotificationPanelData>).detail);
+	}
+
+	function handleWindowKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			isNotificationPanelOpen = false;
+			userMenuOpen = false;
+			mobileMenuOpen = false;
+		}
+	}
+
+	$effect(() => {
+		updateNotificationPanel(notificationPanel);
+	});
+
+	$effect(() => {
+		window.addEventListener(notificationPanelUpdateEvent, handleNotificationUpdate);
+
+		return () => {
+			window.removeEventListener(notificationPanelUpdateEvent, handleNotificationUpdate);
+		};
+	});
 </script>
 
 <svelte:window
 	onclick={(e) => {
 		const target = e.target as HTMLElement;
 		if (!target.closest('.user-menu-container')) userMenuOpen = false;
+		if (!target.closest('.notification-container')) isNotificationPanelOpen = false;
 	}}
+	onkeydown={handleWindowKeydown}
 />
 
 <nav
@@ -109,6 +151,48 @@
 
 		<div class="flex items-center gap-3">
 			{#if profile}
+				<div class="notification-container relative">
+					<button
+						type="button"
+						class="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-transparent bg-transparent text-slate-600 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-950 focus-visible:ring-2 focus-visible:ring-slate-950"
+						aria-label="Notifications"
+						aria-expanded={isNotificationPanelOpen}
+						aria-haspopup="dialog"
+						onclick={() => {
+							isNotificationPanelOpen = !isNotificationPanelOpen;
+							userMenuOpen = false;
+							mobileMenuOpen = false;
+						}}
+					>
+						<svg
+							width="19"
+							height="19"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+							<path d="M13.73 21a2 2 0 0 1-3.46 0" />
+						</svg>
+
+						{#if unreadCount > 0}
+							<span
+								class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[0.6875rem] leading-none font-bold text-white ring-2 ring-white"
+							>
+								{unreadBadge}
+							</span>
+						{/if}
+					</button>
+
+					{#if isNotificationPanelOpen}
+						<NotificationPanel {notifications} {unreadCount} onUpdate={updateNotificationPanel} />
+					{/if}
+				</div>
+
 				<div class="user-menu-container relative">
 					<button
 						class="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-transparent bg-transparent py-1 pr-2.5 pl-1 transition-all duration-200 outline-none hover:border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-950"

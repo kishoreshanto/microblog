@@ -6,7 +6,7 @@
 </script>
 
 <div class="app-shell">
-	<Navbar profile={data.profile} />
+	<Navbar profile={data.profile} notificationPanel={data.notificationPanel} />
 
 	<main class="app-main">
 		<div class="mx-auto max-w-4xl px-6 py-10">

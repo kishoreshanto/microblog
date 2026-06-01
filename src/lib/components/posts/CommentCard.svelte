@@ -1,4 +1,7 @@
 <script lang="ts">
+	import type { NotificationPanelData } from '$lib/types/notifications';
+	import { dispatchNotificationPanelUpdate } from '$lib/utils/notifications';
+
 	export type CommentView = {
 		id: string;
 		post_id: string;
@@ -56,6 +59,11 @@
 			return;
 		}
 
+		const result = (await response.json()) as {
+			notificationPanel?: NotificationPanelData;
+		};
+
+		dispatchNotificationPanelUpdate(result.notificationPanel);
 		onDeleted(comment);
 	}
 </script>
