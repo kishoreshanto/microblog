@@ -201,6 +201,102 @@ export type Database = {
 					}
 				];
 			};
+			notification_kinds: {
+				Row: {
+					key: string;
+					description: string | null;
+					created_at: string;
+				};
+				Insert: {
+					key: string;
+					description?: string | null;
+					created_at?: string;
+				};
+				Update: {
+					key?: string;
+					description?: string | null;
+					created_at?: string;
+				};
+				Relationships: [];
+			};
+			notifications: {
+				Row: {
+					id: string;
+					recipient_id: string;
+					actor_id: string | null;
+					kind: string;
+					post_id: string | null;
+					comment_id: string | null;
+					follow_id: string | null;
+					metadata: Json;
+					read_at: string | null;
+					dismissed_at: string | null;
+					created_at: string;
+				};
+				Insert: {
+					id?: string;
+					recipient_id: string;
+					actor_id?: string | null;
+					kind: string;
+					post_id?: string | null;
+					comment_id?: string | null;
+					follow_id?: string | null;
+					metadata?: Json;
+					read_at?: string | null;
+					dismissed_at?: string | null;
+					created_at?: string;
+				};
+				Update: {
+					id?: string;
+					recipient_id?: string;
+					actor_id?: string | null;
+					kind?: string;
+					post_id?: string | null;
+					comment_id?: string | null;
+					follow_id?: string | null;
+					metadata?: Json;
+					read_at?: string | null;
+					dismissed_at?: string | null;
+					created_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'notifications_recipient_id_fkey';
+						columns: ['recipient_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'notifications_actor_id_fkey';
+						columns: ['actor_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'notifications_post_id_fkey';
+						columns: ['post_id'];
+						isOneToOne: false;
+						referencedRelation: 'posts';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'notifications_comment_id_fkey';
+						columns: ['comment_id'];
+						isOneToOne: false;
+						referencedRelation: 'comments';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'notifications_follow_id_fkey';
+						columns: ['follow_id'];
+						isOneToOne: false;
+						referencedRelation: 'follows';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 		};
 		Views: Record<string, never>;
 		Functions: Record<string, never>;
