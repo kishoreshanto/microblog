@@ -1,8 +1,5 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import {
-	fetchNotificationPanelData,
-	markNotificationRead
-} from '$lib/server/notifications';
+import { fetchNotificationPanelData, markNotificationRead } from '$lib/server/notifications';
 import { markNotificationReadSchema } from '$lib/server/validators/notifications';
 
 export const POST: RequestHandler = async ({ locals, params }) => {

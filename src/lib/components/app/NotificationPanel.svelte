@@ -79,7 +79,9 @@
 		{/if}
 
 		{#if notifications.length === 0}
-			<div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+			<div
+				class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center"
+			>
 				<p class="text-sm font-medium text-slate-950">No notifications.</p>
 			</div>
 		{:else}
