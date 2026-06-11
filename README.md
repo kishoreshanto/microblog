@@ -1,128 +1,114 @@
 # MicroBlog
 
-A modern, secure, and privacy-first social microblogging application built using **Svelte 5 (Runes)**, **SvelteKit**, **TypeScript**, and **Supabase (PostgreSQL, SSR Auth, RLS)**. Designed with strict performance boundaries, strict content constraints, and robust database-level security policies.
+A full-stack social microblogging platform where every post is capped at **100 words** — keeping conversations concise and meaningful. Built from scratch with a modern TypeScript stack and a security-first architecture.
+
+> **Live stack:** SvelteKit · Svelte 5 · TypeScript · Supabase (PostgreSQL) · Tailwind CSS
 
 ---
 
-## Key Features
+## What It Does
 
-- **100-Word Constraint:** Content limits are strictly enforced both client-side and server-side to keep blogging clean and concise. Word count tokenization handles whitespaces, symbols, and formatting.
-- **Granular Visibility Controls:**
-  - `private`: Invisible to all except the author. Interactions (likes/comments) are locked down at the UI and database levels.
-  - `followers`: Restrained to approved followers and the author.
-  - `public`: Visible to all visitors.
-- **Secure Follower Model:** A bidirectional follow system supporting follow requests, cancellation, approvals, and unfollow actions. Follow verification is enforced through database relationships to avoid spoofing.
-- **Metric-Driven Interactions:**
-  - **Post Voting:** One vote (like/dislike) per user per post, enforced via PostgreSQL uniqueness constraints.
-  - **Two-Tier Comments:** Comments support up to 500 characters. Nested conversations are allowed up to a single level (replies to comments), with deeper nesting blocked by custom PL/pgSQL triggers.
-- **Rich Text Composer:** Features a real-time WYSIWYG editor built on **Tiptap**, supporting bold, italic, strike, code blocks, lists, blockquotes, horizontal rules, and dynamic word counts. Supports smooth state synchronization with raw form boundaries.
-- **Intelligent Notification System:** Real-time updates notifying users of votes, comments, replies, follow requests, and follow approvals. Built with deduplication indexing to prevent notification clutter. Supports marking as read, global reads, and soft-delete dismissals.
+MicroBlog is a complete social platform with short-form writing at its core. Users can create an account, write posts with a rich text editor, follow other users, vote on content, and engage through threaded comments — all within a clean, privacy-respecting experience.
+
+### Core Capabilities
+
+| Feature | Description |
+| :--- | :--- |
+| **100-Word Posts** | A strict word limit enforced on both client and server, encouraging clear and intentional writing |
+| **Rich Text Editor** | A full WYSIWYG composer (bold, italic, lists, code blocks, blockquotes) powered by Tiptap with live word counting |
+| **Visibility Controls** | Every post can be set to **Public**, **Followers Only**, or **Private** — enforced all the way down to the database |
+| **Follow System** | A request-based follower model with approve/reject flow, similar to private social accounts |
+| **Voting & Comments** | Upvote/downvote on posts with one-vote-per-user enforcement; threaded comments with one level of replies |
+| **Notifications** | Real-time notification feed for votes, comments, replies, follow requests, and approvals |
+| **User Profiles** | Public profile pages at `/u/username` with post history and follow actions |
 
 ---
 
-## Architecture Design
+## System Architecture
 
-### 1. Reactivity via Svelte 5 Runes
-
-The application is built on the next-generation Svelte 5 compile-time runtime, utilizing runes like `$state()`, `$derived()`, and `$effect()` for granular DOM updates.
-
-### 2. Request-Level Auth Session Caching
-
-To minimize overhead, database client initialization and session lookup are performed inside `src/hooks.server.ts`. The authentication state checks run in a request-scoped promise (`safeGetSession`), preventing redundant round-trips to Supabase during parallel loader executions.
-
-### 3. Database-Level Constraint Enforcement
-
-Security is not only handled at the SvelteKit application boundary but also fully enforced at the PostgreSQL level.
-
-- **Comment Depth Trigger:** Deep nested spam replies are rejected by a database trigger preventing `parent_id` hierarchy beyond level 1.
-- **Row-Level Security (RLS):** Every table enforces strict isolation. For example, comments or votes on `private` posts are rejected at the database level.
+![Database Schema](./system-architecure.png)
 
 ---
 
 ## Technology Stack
 
-| Layer                  | Technology                              | Architectural Role                                                                 |
-| :--------------------- | :-------------------------------------- | :--------------------------------------------------------------------------------- |
-| **Frontend Framework** | Svelte 5.55.2 / SvelteKit 2.57.0        | Component rendering, server-side page loaders, form actions, routing               |
-| **Language**           | TypeScript 6.0.2                        | Compile-time safety, strict type structures (database tables & posts UI contracts) |
-| **Database & Auth**    | Supabase (PostgreSQL) / `@supabase/ssr` | Database engine, cookie-based session management, secure storage                   |
-| **Rich Text Editor**   | Tiptap 3.23.4                           | WYSIWYG editor with character counters and keyboard shortcut bindings              |
-| **Styling**            | Tailwind CSS v4.2.2                     | Tailwind v4 compilation via Vite plugin, typography & forms extension              |
-| **Validation**         | Zod 4.4.3                               | Runtime validator schemas for forms and REST API endpoints                         |
-| **Testing**            | Vitest 4.1.3 / Playwright 1.59.1        | Unit checks, browser unit tests, end-to-end user flow automation                   |
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Framework** | SvelteKit + Svelte 5 (Runes) | Full-stack rendering, routing, and server-side logic |
+| **Language** | TypeScript | Type safety across the entire codebase |
+| **Database** | Supabase (PostgreSQL) | Data storage with Row-Level Security policies |
+| **Auth** | Supabase Auth + `@supabase/ssr` | Cookie-based session management |
+| **Editor** | Tiptap | Rich text composition with keyboard shortcuts |
+| **Styling** | Tailwind CSS v4 | Utility-first styling with forms and typography plugins |
+| **Validation** | Zod | Runtime schema validation for all user input |
+| **Testing** | Vitest + Playwright | Unit tests, browser tests, and end-to-end automation |
+| **CI/CD** | GitHub Actions | Automated formatting, type checking, and test runs on every push |
+| **Deployment** | Vercel | Serverless hosting with edge optimization |
 
 ---
 
-## Database Schema Blueprint
-    
-![Schema](./.github/MicroBlog-DB-Schema.png)
+## Database Schema
+
+![Database Schema](./.github/MicroBlog-DB-Schema.png)
+
+---
+
+## Security Approach
+
+Security is enforced at **every layer**, not just the application boundary:
+
+- **Server-Side Validation** — All form inputs and API payloads are validated through Zod schemas before touching the database
+- **Row-Level Security (RLS)** — PostgreSQL policies ensure users can only access data they are authorized to see, even if application code is bypassed
+- **Database Triggers** — A PL/pgSQL trigger prevents comment nesting beyond one reply level, blocking deep spam threads at the database layer
+- **Request-Scoped Auth** — Authentication state is resolved once per request and cached, preventing redundant lookups across parallel loaders
 
 ---
 
 ## Testing Strategy
 
-The project employs two distinct automated verification layers, configured to run in parallel in the CI workflow:
+The project maintains two layers of automated testing:
 
-1.  **Unit & Validator Tests (Vitest):**
-    - Colocated `*.spec.ts` files.
-    - Dual-project setup: a `server` environment running under Node for logic/validation, and a `client` environment for browser-based Svelte unit checking.
-    - _Run command:_ `npm run test:unit`
-2.  **End-to-End User Journeys (Playwright):**
-    - Automates register, login, onboarding, post creation/deletion, visibility constraints, follow requests, follow approvals, and interactions checking.
-    - _Run command:_ `npm run test:e2e`
+- **Unit & Validation Tests** — Colocated `*.spec.ts` files run via Vitest in dual environments (Node for server logic, browser for Svelte components)
+- **End-to-End Tests** — Playwright automates full user journeys: registration, login, onboarding, post creation, visibility enforcement, follow workflows, and interactions
+
+All tests run automatically in CI on every push to `master`.
 
 ---
 
-## Local Setup & Installation
+## Getting Started
 
 ### Prerequisites
 
-- Node.js (v22.x or later)
-- Supabase Account or Local CLI instance
+- Node.js v22+
+- A Supabase project (or local Supabase CLI)
 
-### 1. Clone & Install Dependencies
+### Setup
 
 ```bash
+# Clone and install
 git clone <repository-url>
 cd microblog
 npm install
-```
 
-### 2. Configure Environment Variables
+# Configure environment
+cp .env.example .env
+# Edit .env with your Supabase credentials
 
-Create a `.env` file in the root directory:
+# Apply database migrations (in order)
+# See supabase/migrations/ for the full list
 
-```env
-PUBLIC_SUPABASE_URL="https://your-supabase-project.supabase.co"
-PUBLIC_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key"
-```
-
-### 3. Database Migrations
-
-Initialize the Supabase database. Apply the migrations in `supabase/migrations/` in chronological order:
-
-1.  `20260525000000_add_social_visibility.sql` (Profiles, posts, follows, RLS)
-2.  `20260526000000_add_votes_and_comments.sql` (Votes, comments, depth limits, RLS)
-3.  `20260601000000_add_notifications.sql` (Notifications schema, deduplication indexes, RLS)
-4.  `20260601001000_grant_notifications_access.sql` (Table permissions & grants)
-
-### 4. Running the Dev Server
-
-```bash
+# Start the dev server
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+The app will be available at [http://localhost:5173](http://localhost:5173).
 
-### 5. Running Quality Verification
+### Available Commands
 
 ```bash
-# Formatter check
-npm run format:check
-
-# TypeScript check
-npm run check
-
-# Full validation suite (Vitest + Playwright)
-npm run test
+npm run dev            # Start development server
+npm run build          # Production build
+npm run check          # TypeScript type checking
+npm run format:check   # Code formatting verification
+npm run test           # Run all tests (unit + e2e)
 ```
