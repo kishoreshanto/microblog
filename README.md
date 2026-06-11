@@ -12,15 +12,15 @@ MicroBlog is a complete social platform with short-form writing at its core. Use
 
 ### Core Capabilities
 
-| Feature | Description |
-| :--- | :--- |
-| **100-Word Posts** | A strict word limit enforced on both client and server, encouraging clear and intentional writing |
-| **Rich Text Editor** | A full WYSIWYG composer (bold, italic, lists, code blocks, blockquotes) powered by Tiptap with live word counting |
+| Feature                 | Description                                                                                                         |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| **100-Word Posts**      | A strict word limit enforced on both client and server, encouraging clear and intentional writing                   |
+| **Rich Text Editor**    | A full WYSIWYG composer (bold, italic, lists, code blocks, blockquotes) powered by Tiptap with live word counting   |
 | **Visibility Controls** | Every post can be set to **Public**, **Followers Only**, or **Private** — enforced all the way down to the database |
-| **Follow System** | A request-based follower model with approve/reject flow, similar to private social accounts |
-| **Voting & Comments** | Upvote/downvote on posts with one-vote-per-user enforcement; threaded comments with one level of replies |
-| **Notifications** | Real-time notification feed for votes, comments, replies, follow requests, and approvals |
-| **User Profiles** | Public profile pages at `/u/username` with post history and follow actions |
+| **Follow System**       | A request-based follower model with approve/reject flow, similar to private social accounts                         |
+| **Voting & Comments**   | Upvote/downvote on posts with one-vote-per-user enforcement; threaded comments with one level of replies            |
+| **Notifications**       | Real-time notification feed for votes, comments, replies, follow requests, and approvals                            |
+| **User Profiles**       | Public profile pages at `/u/username` with post history and follow actions                                          |
 
 ---
 
@@ -32,18 +32,18 @@ MicroBlog is a complete social platform with short-form writing at its core. Use
 
 ## Technology Stack
 
-| Layer | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Framework** | SvelteKit + Svelte 5 (Runes) | Full-stack rendering, routing, and server-side logic |
-| **Language** | TypeScript | Type safety across the entire codebase |
-| **Database** | Supabase (PostgreSQL) | Data storage with Row-Level Security policies |
-| **Auth** | Supabase Auth + `@supabase/ssr` | Cookie-based session management |
-| **Editor** | Tiptap | Rich text composition with keyboard shortcuts |
-| **Styling** | Tailwind CSS v4 | Utility-first styling with forms and typography plugins |
-| **Validation** | Zod | Runtime schema validation for all user input |
-| **Testing** | Vitest + Playwright | Unit tests, browser tests, and end-to-end automation |
-| **CI/CD** | GitHub Actions | Automated formatting, type checking, and test runs on every push |
-| **Deployment** | Vercel | Serverless hosting with edge optimization |
+| Layer          | Technology                      | Purpose                                                          |
+| :------------- | :------------------------------ | :--------------------------------------------------------------- |
+| **Framework**  | SvelteKit + Svelte 5 (Runes)    | Full-stack rendering, routing, and server-side logic             |
+| **Language**   | TypeScript                      | Type safety across the entire codebase                           |
+| **Database**   | Supabase (PostgreSQL)           | Data storage with Row-Level Security policies                    |
+| **Auth**       | Supabase Auth + `@supabase/ssr` | Cookie-based session management                                  |
+| **Editor**     | Tiptap                          | Rich text composition with keyboard shortcuts                    |
+| **Styling**    | Tailwind CSS v4                 | Utility-first styling with forms and typography plugins          |
+| **Validation** | Zod                             | Runtime schema validation for all user input                     |
+| **Testing**    | Vitest + Playwright             | Unit tests, browser tests, and end-to-end automation             |
+| **CI/CD**      | GitHub Actions                  | Automated formatting, type checking, and test runs on every push |
+| **Deployment** | Vercel                          | Serverless hosting with edge optimization                        |
 
 ---
 
